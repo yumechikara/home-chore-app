@@ -1,10 +1,12 @@
 /* ============================================================
-   おうち当番 - Style
+   おうち当番 v2 - Style
    ============================================================ */
 
 :root {
   --color-primary: #4A90D9;
   --color-primary-light: #E6F1FB;
+  --color-accent: #E8828A;
+  --color-accent-light: #FFF0F2;
   --color-bg: #F7F7F7;
   --color-card: #FFFFFF;
   --color-text: #1A1A1A;
@@ -14,6 +16,8 @@
   --color-success-bg: #EAF3DE;
   --color-warning: #854F0B;
   --color-warning-bg: #FAEEDA;
+  --color-danger: #C53030;
+  --color-danger-bg: #FEE2E2;
 
   /* ゴミ種別カラー */
   --garbage-burn-bg: #FAECE7;
@@ -41,54 +45,150 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   background: var(--color-bg);
   color: var(--color-text);
   max-width: 430px;
   margin: 0 auto;
   min-height: 100dvh;
   position: relative;
-  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
-/* Header */
-.app-header {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  background: var(--color-card);
-  border-bottom: 1px solid var(--color-border);
-  height: var(--header-height);
+/* ============================================================
+   ログイン画面
+   ============================================================ */
+.login-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: var(--color-bg);
   display: flex;
   align-items: center;
   justify-content: center;
 }
+.login-screen.hidden { display: none; }
+.login-container {
+  width: 100%;
+  max-width: 360px;
+  padding: 24px;
+  text-align: center;
+}
+.login-icon { margin: 0 auto 16px; }
+.login-container h2 {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.login-subtitle {
+  color: var(--color-text-sub);
+  font-size: 14px;
+  margin-bottom: 32px;
+}
+#login-form .form-group {
+  text-align: left;
+  margin-bottom: 16px;
+}
+#login-form label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: var(--color-text-sub);
+}
+#login-form input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font-size: 16px;
+  background: var(--color-card);
+  transition: border-color 0.2s;
+}
+#login-form input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+.pin-input {
+  letter-spacing: 12px !important;
+  text-align: center !important;
+  font-size: 24px !important;
+}
+.login-btn {
+  width: 100%;
+  padding: 14px;
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: opacity 0.2s;
+}
+.login-btn:active { opacity: 0.8; }
+.login-btn:disabled { opacity: 0.5; }
+.login-link {
+  color: var(--color-primary);
+  font-size: 13px;
+  cursor: pointer;
+  margin-top: 16px;
+  display: block;
+  text-align: center;
+  background: none;
+  border: none;
+  text-decoration: underline;
+}
+.login-error {
+  color: var(--color-danger);
+  font-size: 13px;
+  margin-top: 8px;
+  text-align: center;
+  min-height: 18px;
+}
+.login-info {
+  color: var(--color-text-sub);
+  font-size: 12px;
+  margin-top: 20px;
+  line-height: 1.5;
+}
 
+/* ============================================================
+   ヘッダー
+   ============================================================ */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--color-card);
+  height: var(--header-height);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid var(--color-border);
+}
 .app-header h1 {
   font-size: 16px;
   font-weight: 700;
 }
 
-/* Main */
+/* ============================================================
+   メインコンテンツ
+   ============================================================ */
 main {
-  padding: 12px 16px;
-  padding-bottom: calc(var(--nav-height) + 24px);
-  min-height: calc(100dvh - var(--header-height));
+  padding: 12px 16px calc(var(--nav-height) + 16px);
 }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
 
-/* Tab panels */
-.tab-panel {
-  display: none;
-}
-
-.tab-panel.active {
-  display: block;
-}
-
-/* Bottom Navigation */
+/* ============================================================
+   ボトムナビ
+   ============================================================ */
 .bottom-nav {
   position: fixed;
   bottom: 0;
@@ -102,7 +202,6 @@ main {
   display: flex;
   z-index: 100;
 }
-
 .nav-btn {
   flex: 1;
   display: flex;
@@ -110,49 +209,25 @@ main {
   align-items: center;
   justify-content: center;
   gap: 2px;
-  border: none;
   background: none;
+  border: none;
   color: var(--color-text-sub);
   font-size: 10px;
   cursor: pointer;
   transition: color 0.2s;
-  -webkit-tap-highlight-color: transparent;
+  padding: 0;
 }
-
-.nav-btn.active {
-  color: var(--color-primary);
-}
-
 .nav-btn svg {
   width: 22px;
   height: 22px;
 }
-
-/* iOS note */
-.ios-note {
-  position: fixed;
-  bottom: calc(var(--nav-height) + 2px);
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 9px;
-  color: #999;
-  text-align: center;
-  pointer-events: none;
+.nav-btn.active {
+  color: var(--color-primary);
 }
 
 /* ============================================================
-   Cards & Sections
+   カード
    ============================================================ */
-
-.section-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--color-text-sub);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin: 16px 0 8px;
-}
-
 .card {
   background: var(--color-card);
   border-radius: 12px;
@@ -160,49 +235,86 @@ main {
   margin-bottom: 12px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
-
-.date-display {
-  font-size: 24px;
-  font-weight: 700;
-  margin-bottom: 4px;
-}
-
-.date-sub {
+.section-title {
   font-size: 13px;
+  font-weight: 700;
   color: var(--color-text-sub);
-  margin-bottom: 16px;
+  margin: 16px 0 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 /* ============================================================
-   Garbage Tags
+   ゴミタグ
    ============================================================ */
-
+.garbage-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
 .garbage-tag {
   display: inline-block;
-  padding: 4px 12px;
+  padding: 3px 10px;
   border-radius: 20px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
-  margin: 2px 4px 2px 0;
+  line-height: 1.5;
 }
-
 .garbage-tag.burn { background: var(--garbage-burn-bg); color: var(--garbage-burn-text); }
 .garbage-tag.nonburn { background: var(--garbage-nonburn-bg); color: var(--garbage-nonburn-text); }
 .garbage-tag.resource { background: var(--garbage-resource-bg); color: var(--garbage-resource-text); }
 .garbage-tag.bottle { background: var(--garbage-bottle-bg); color: var(--garbage-bottle-text); }
 .garbage-tag.plastic { background: var(--garbage-plastic-bg); color: var(--garbage-plastic-text); }
 .garbage-tag.can { background: var(--garbage-can-bg); color: var(--garbage-can-text); }
+.no-garbage { color: var(--color-text-sub); font-size: 13px; }
 
-.no-garbage {
+/* ============================================================
+   天気カード
+   ============================================================ */
+.weather-card {
+  background: linear-gradient(135deg, #E6F1FB, #EEEDFE);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin: 8px 0 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+.weather-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.weather-icon { font-size: 36px; line-height: 1; }
+.weather-temp { font-size: 28px; font-weight: 800; }
+.weather-desc { font-size: 14px; color: var(--color-text-sub); }
+.weather-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 12px;
+}
+.weather-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  padding: 3px 0;
+}
+.weather-item .wi-label { color: var(--color-text-sub); white-space: nowrap; }
+.weather-item .wi-value { font-weight: 700; }
+.pm25-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.weather-loading {
+  text-align: center;
+  padding: 16px;
   color: var(--color-text-sub);
-  font-size: 14px;
-  padding: 8px 0;
+  font-size: 13px;
+  background: linear-gradient(135deg, #E6F1FB, #EEEDFE);
 }
 
 /* ============================================================
-   Chore Items
+   家事チェックリスト
    ============================================================ */
-
 .chore-item {
   display: flex;
   align-items: center;
@@ -210,455 +322,603 @@ main {
   padding: 12px 0;
   border-bottom: 1px solid var(--color-border);
 }
-
-.chore-item:last-child {
-  border-bottom: none;
-}
-
+.chore-item:last-child { border-bottom: none; }
+.chore-info { flex: 1; min-width: 0; }
 .chore-name {
   font-size: 15px;
   font-weight: 500;
 }
-
+.chore-difficulty {
+  font-size: 11px;
+  color: var(--color-warning);
+  margin-top: 2px;
+}
+.chore-meta {
+  font-size: 11px;
+  color: var(--color-text-sub);
+  margin-top: 2px;
+}
 .chore-actions {
   display: flex;
-  gap: 8px;
+  gap: 6px;
+  flex-shrink: 0;
 }
+.chore-item.chore-done { opacity: 0.6; }
+.chore-item.chore-not_done .chore-name { text-decoration: line-through; opacity: 0.5; }
+.chore-item.chore-carry_over { background: #FFF8F0; margin: 0 -16px; padding: 12px 16px; }
 
+/* ステータスバッジ */
+.status-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+.status-badge.done { background: var(--color-success-bg); color: var(--color-success); }
+.status-badge.not_done { background: var(--color-danger-bg); color: var(--color-danger); }
+.status-badge.carry_over { background: var(--color-warning-bg); color: var(--color-warning); }
+.status-badge.other { background: #F0F0F0; color: #666; }
+
+/* ボタン */
 .btn {
-  padding: 6px 14px;
-  border-radius: 8px;
+  padding: 8px 14px;
   border: none;
+  border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: opacity 0.2s;
-  -webkit-tap-highlight-color: transparent;
 }
+.btn:active { opacity: 0.7; }
+.btn-primary { background: var(--color-primary); color: white; }
+.btn-complete { background: var(--color-success-bg); color: var(--color-success); }
+.btn-skip { background: #F0F0F0; color: var(--color-text-sub); }
+.btn-danger { background: var(--color-danger-bg); color: var(--color-danger); }
+.btn-secondary { background: var(--color-primary-light); color: var(--color-primary); }
+.btn-block { width: 100%; padding: 12px; }
 
-.btn:active {
-  opacity: 0.7;
+/* 同期バー */
+.sync-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--color-text-sub);
+  padding: 4px 0 8px;
 }
-
-.btn-complete {
-  background: var(--color-success-bg);
-  color: var(--color-success);
-}
-
-.btn-skip {
-  background: var(--color-warning-bg);
-  color: var(--color-warning);
-}
-
-.btn-primary {
-  background: var(--color-primary);
-  color: #fff;
-  width: 100%;
-  padding: 12px;
-  font-size: 15px;
-  border-radius: 10px;
-  margin-top: 8px;
-}
-
-.btn-secondary {
-  background: var(--color-primary-light);
+.sync-bar button {
+  background: none;
+  border: none;
   color: var(--color-primary);
-  width: 100%;
-  padding: 12px;
-  font-size: 15px;
-  border-radius: 10px;
-  margin-top: 8px;
-}
-
-.chore-done {
-  opacity: 0.4;
-  text-decoration: line-through;
-}
-
-.chore-skipped {
-  opacity: 0.5;
-  font-style: italic;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 /* ============================================================
-   Calendar (Tab 2)
+   今日の日付表示
    ============================================================ */
+.today-date {
+  font-size: 20px;
+  font-weight: 700;
+}
+.today-day {
+  font-size: 14px;
+  color: var(--color-text-sub);
+}
 
+/* ============================================================
+   カレンダー
+   ============================================================ */
 .calendar-nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
-
 .calendar-nav button {
-  background: none;
-  border: 1px solid var(--color-border);
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  border: none;
   border-radius: 8px;
   padding: 6px 12px;
-  font-size: 14px;
-  cursor: pointer;
-  color: var(--color-text);
-}
-
-.calendar-nav .current-period {
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 600;
+  cursor: pointer;
 }
-
+.calendar-nav .calendar-title {
+  font-size: 15px;
+  font-weight: 700;
+}
 .week-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 4px;
 }
-
-.week-header {
+.day-header {
   text-align: center;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--color-text-sub);
   padding: 4px 0;
 }
-
-.week-header:first-child { color: #D93025; }
-.week-header:last-child { color: #4A90D9; }
-
+.day-header:first-child { color: #C53030; }
+.day-header:last-child { color: #185FA5; }
 .day-cell {
   background: var(--color-card);
   border-radius: 8px;
-  padding: 6px 4px;
+  padding: 4px;
   min-height: 80px;
-  text-align: center;
+  font-size: 12px;
 }
-
+.day-cell .day-num {
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 2px;
+}
 .day-cell.today {
   border: 2px solid var(--color-primary);
 }
-
-.day-cell .day-num {
-  font-size: 13px;
-  font-weight: 600;
-  margin-bottom: 4px;
-}
-
-.day-cell .day-num.sun { color: #D93025; }
-.day-cell .day-num.sat { color: #4A90D9; }
-
+.day-cell.other-month { opacity: 0.3; }
 .day-cell .garbage-tag {
   font-size: 9px;
-  padding: 2px 4px;
-  margin: 1px 0;
+  padding: 1px 4px;
   display: block;
+  margin: 1px 0;
+  text-align: center;
 }
 
 /* ============================================================
-   Points (Tab 3)
+   ポイント
    ============================================================ */
-
 .points-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
   margin-bottom: 16px;
 }
-
 .point-card {
   background: var(--color-card);
   border-radius: 12px;
-  padding: 16px;
+  padding: 20px 16px;
   text-align: center;
   box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
-
 .point-card .member-name {
   font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 8px;
+  color: var(--color-text-sub);
+  margin-bottom: 4px;
 }
-
 .point-card .point-value {
-  font-size: 32px;
-  font-weight: 700;
+  font-size: 36px;
+  font-weight: 800;
   color: var(--color-primary);
 }
-
 .point-card .point-label {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--color-text-sub);
-  margin-top: 2px;
 }
-
-.point-alert {
-  background: var(--color-warning-bg);
-  color: var(--color-warning);
-  padding: 10px 14px;
-  border-radius: 10px;
-  font-size: 13px;
-  margin-bottom: 12px;
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: var(--color-border);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+.progress-bar .fill {
+  height: 100%;
+  background: var(--color-accent);
+  border-radius: 4px;
+  transition: width 0.3s;
+}
+.roulette-trigger {
   text-align: center;
+  margin: 12px 0;
 }
-
-.history-item {
+.roulette-trigger .btn {
+  padding: 14px 28px;
+  font-size: 16px;
+  background: linear-gradient(135deg, #FFB5C5, #FFDAB9);
+  color: #993556;
+  border-radius: 50px;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+.request-badge {
+  background: var(--color-accent-light);
+  border: 1px solid var(--color-accent);
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
   display: flex;
   align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+.request-badge .badge-icon { font-size: 20px; }
+
+/* ポイント履歴 */
+.point-history { margin-top: 8px; }
+.point-history-item {
+  display: flex;
   justify-content: space-between;
-  padding: 10px 14px;
-  border-radius: 8px;
-  margin-bottom: 6px;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--color-border);
   font-size: 13px;
 }
-
-.history-item.done {
-  background: var(--color-success-bg);
+.point-history-item:last-child { border-bottom: none; }
+.point-history-item .pts {
+  font-weight: 700;
   color: var(--color-success);
 }
-
-.history-item.skipped {
-  background: var(--color-warning-bg);
-  color: var(--color-warning);
-}
-
-.history-date {
-  font-size: 11px;
-  opacity: 0.8;
+.point-history-item .pts.spent {
+  color: var(--color-danger);
 }
 
 /* ============================================================
-   Settings (Tab 4)
+   設定
    ============================================================ */
-
-.form-group {
-  margin-bottom: 16px;
+.settings-card { margin-bottom: 16px; }
+.form-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-sub);
+  margin: 20px 0 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
 }
-
+.form-section-title:first-child { border-top: none; margin-top: 0; padding-top: 0; }
+.form-group {
+  margin-bottom: 12px;
+}
 .form-group label {
   display: block;
   font-size: 13px;
   font-weight: 600;
+  margin-bottom: 4px;
   color: var(--color-text-sub);
-  margin-bottom: 6px;
 }
-
-.form-group input {
+.form-group input, .form-group select {
   width: 100%;
   padding: 10px 12px;
   border: 1px solid var(--color-border);
   border-radius: 8px;
-  font-size: 15px;
-  font-family: inherit;
+  font-size: 14px;
   background: var(--color-card);
+}
+.form-group input:focus, .form-group select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+.form-hint {
+  font-size: 11px;
+  color: var(--color-text-sub);
+  margin-top: 4px;
+}
+.settings-user {
+  text-align: center;
+  padding: 12px;
+  font-size: 14px;
+  color: var(--color-text-sub);
+  margin-bottom: 12px;
+}
+.settings-user strong {
   color: var(--color-text);
 }
 
-.form-group input:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(74,144,217,0.15);
+/* 家事リスト管理 */
+.chore-editor-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--color-border);
 }
-
-.form-section-title {
-  font-size: 15px;
-  font-weight: 700;
-  margin: 20px 0 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--color-border);
+.chore-editor-item:last-child { border-bottom: none; }
+.chore-editor-item input[type="text"] {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font-size: 14px;
 }
-
-.form-section-title:first-child {
-  margin-top: 0;
-  padding-top: 0;
-  border-top: none;
-}
-
-.save-msg {
-  text-align: center;
-  color: var(--color-success);
+.chore-editor-item select {
+  width: 70px;
+  padding: 8px 4px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
   font-size: 13px;
-  margin-top: 8px;
-  opacity: 0;
-  transition: opacity 0.3s;
+}
+.chore-editor-item .btn-del {
+  background: none;
+  border: none;
+  color: var(--color-danger);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 8px;
 }
 
-.save-msg.show {
-  opacity: 1;
+/* ログイン履歴 */
+.login-history-section { margin-top: 16px; }
+.login-history-section summary {
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 12px 0;
+  color: var(--color-primary);
+  list-style: none;
+}
+.login-history-section summary::before { content: '▶ '; font-size: 10px; }
+.login-history-section[open] summary::before { content: '▼ '; }
+.login-history-list { max-height: 300px; overflow-y: auto; }
+.login-history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 13px;
+}
+.login-history-device {
+  color: var(--color-text-sub);
+  font-size: 11px;
 }
 
 /* ============================================================
-   Chat (Tab 5)
+   チャット
    ============================================================ */
-
-#tab-chat {
-  display: none;
-  position: relative;
-}
-
 #tab-chat.active {
   display: flex;
   flex-direction: column;
-  height: calc(100dvh - var(--header-height) - var(--nav-height) - 24px);
+  height: calc(100dvh - var(--header-height) - var(--nav-height));
 }
-
 .chat-messages {
   flex: 1;
   overflow-y: auto;
-  padding-bottom: 12px;
+  padding: 12px 0;
   -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
-
 .chat-bubble {
   max-width: 85%;
   padding: 10px 14px;
   border-radius: 16px;
-  margin-bottom: 8px;
   font-size: 14px;
   line-height: 1.5;
   word-break: break-word;
   white-space: pre-wrap;
 }
-
 .chat-bubble.ai {
   background: var(--chat-ai-bg);
-  border-bottom-left-radius: 4px;
   align-self: flex-start;
-  margin-right: auto;
+  border-bottom-left-radius: 4px;
 }
-
 .chat-bubble.user {
   background: var(--chat-user-bg);
+  align-self: flex-end;
   border-bottom-right-radius: 4px;
-  margin-left: auto;
 }
-
-.chat-messages {
-  display: flex;
-  flex-direction: column;
-}
-
-.chat-suggest {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  margin-bottom: 10px;
-}
-
-.suggest-btn {
-  padding: 6px 12px;
-  border-radius: 20px;
-  border: 1px solid var(--color-border);
-  background: var(--color-card);
-  font-size: 12px;
-  cursor: pointer;
-  color: var(--color-text);
-  white-space: nowrap;
-}
-
-.chat-input-area {
+.chat-input-row {
   display: flex;
   gap: 8px;
-  padding-top: 8px;
+  padding: 8px 0;
   border-top: 1px solid var(--color-border);
 }
-
-.chat-input-area input {
+.chat-input-row input {
   flex: 1;
   padding: 10px 14px;
   border: 1px solid var(--color-border);
-  border-radius: 24px;
+  border-radius: 20px;
   font-size: 14px;
-  font-family: inherit;
   background: var(--color-card);
 }
-
-.chat-input-area input:focus {
-  outline: none;
-  border-color: var(--color-primary);
-}
-
-.chat-send-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: none;
+.chat-input-row input:focus { outline: none; border-color: var(--color-primary); }
+.chat-input-row button {
   background: var(--color-primary);
-  color: #fff;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 0 18px;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
+}
+.chat-suggest {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 4px 0;
 }
-
-.chat-send-btn:disabled {
-  opacity: 0.4;
+.chat-suggest button {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  border: none;
+  border-radius: 16px;
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
 }
-
 .chat-loading {
   display: flex;
   gap: 4px;
   padding: 10px 14px;
   align-self: flex-start;
 }
-
 .chat-loading span {
   width: 8px;
   height: 8px;
+  background: #999;
   border-radius: 50%;
-  background: #aaa;
-  animation: bounce 1.2s infinite;
+  animation: bounce 1.4s infinite ease-in-out;
 }
-
 .chat-loading span:nth-child(2) { animation-delay: 0.2s; }
 .chat-loading span:nth-child(3) { animation-delay: 0.4s; }
-
 @keyframes bounce {
-  0%, 60%, 100% { transform: translateY(0); }
-  30% { transform: translateY(-6px); }
+  0%, 80%, 100% { transform: scale(0); }
+  40% { transform: scale(1); }
 }
 
 /* ============================================================
-   Notification banner
+   モーダル
    ============================================================ */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.modal.hidden { display: none; }
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+}
+.modal-sheet {
+  position: relative;
+  background: var(--color-card);
+  border-radius: 16px 16px 0 0;
+  padding: 24px 20px calc(env(safe-area-inset-bottom, 0px) + 20px);
+  width: 100%;
+  max-width: 430px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+.modal-sheet h3 {
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  text-align: center;
+}
+.status-option {
+  display: block;
+  width: 100%;
+  padding: 14px 16px;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  margin-bottom: 8px;
+  transition: opacity 0.2s;
+}
+.status-option:active { opacity: 0.7; }
+.status-option.done { background: var(--color-success-bg); color: var(--color-success); }
+.status-option.not-done { background: var(--color-danger-bg); color: var(--color-danger); }
+.status-option.carry-over { background: var(--color-warning-bg); color: var(--color-warning); }
+.status-option.other { background: #F0F0F0; color: #666; }
 
-.notif-banner {
-  background: var(--color-primary-light);
-  color: var(--color-primary);
-  padding: 10px 14px;
-  border-radius: 10px;
-  font-size: 13px;
-  margin-bottom: 12px;
+/* ============================================================
+   ルーレット
+   ============================================================ */
+.roulette-sheet { text-align: center; padding-bottom: 32px; }
+.roulette-wheel {
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  border: 4px solid var(--color-accent);
+  margin: 16px auto;
+  position: relative;
+  overflow: hidden;
+  transition: transform 4s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+.roulette-slice {
+  position: absolute;
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
+  padding-right: 20px;
+  transform-origin: center center;
+  font-size: 11px;
+  font-weight: 600;
+}
+.roulette-pointer {
+  width: 0;
+  height: 0;
+  border-left: 12px solid transparent;
+  border-right: 12px solid transparent;
+  border-top: 20px solid var(--color-accent);
+  margin: 0 auto;
+}
+.roulette-result {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--color-accent);
+  margin-top: 16px;
+  min-height: 28px;
+}
+.roulette-actions { margin-top: 12px; }
+
+/* ============================================================
+   通知バナー
+   ============================================================ */
+.notif-banner {
+  background: var(--color-warning-bg);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--color-warning);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.notif-banner button {
+  background: var(--color-warning);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
+  margin-left: auto;
 }
 
 /* ============================================================
-   Utility
+   その他
    ============================================================ */
-
-.empty-state {
+.ios-note {
   text-align: center;
+  font-size: 11px;
   color: var(--color-text-sub);
-  padding: 32px 16px;
-  font-size: 14px;
+  padding: 8px 16px calc(var(--nav-height) + 20px);
 }
-
-.loading {
-  text-align: center;
-  color: var(--color-text-sub);
-  padding: 20px;
-  font-size: 14px;
-}
-
-.error-msg {
-  background: #FEE;
-  color: #C00;
-  padding: 10px 14px;
-  border-radius: 10px;
+.alert-banner {
+  background: var(--color-accent-light);
+  border: 1px solid var(--color-accent);
+  border-radius: 8px;
+  padding: 10px 12px;
   font-size: 13px;
+  color: #993556;
   margin-bottom: 12px;
 }
-
-.hidden {
-  display: none !important;
+.empty-state {
+  text-align: center;
+  padding: 32px 16px;
+  color: var(--color-text-sub);
+  font-size: 14px;
+}
+.carry-badge {
+  display: inline-block;
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 8px;
+  margin-left: 4px;
 }

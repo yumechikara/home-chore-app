@@ -11,6 +11,31 @@
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
+
+  <!-- ログイン画面 -->
+  <div id="login-screen" class="login-screen">
+    <div class="login-container">
+      <div class="login-icon">
+        <svg viewBox="0 0 512 512" width="80" height="80">
+          <defs><linearGradient id="lbg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FFB5C5"/><stop offset="100%" stop-color="#FFDAB9"/></linearGradient></defs>
+          <rect width="512" height="512" rx="96" fill="url(#lbg)"/>
+          <g transform="translate(256,270)">
+            <path d="M-120,20 L-120,-60 L0,-140 L120,-60 L120,20 L60,20 L60,-20 L20,-20 L20,20 Z" fill="white" stroke="#E8828A" stroke-width="8" stroke-linejoin="round"/>
+            <rect x="-40" y="-50" width="35" height="30" rx="4" fill="#FFE4B5" stroke="#E8828A" stroke-width="4"/>
+            <rect x="15" y="-50" width="35" height="30" rx="4" fill="#FFE4B5" stroke="#E8828A" stroke-width="4"/>
+            <rect x="-20" y="-10" width="40" height="32" rx="6" fill="#E8828A"/>
+            <circle cx="8" cy="6" r="4" fill="#FFB5C5"/>
+            <path d="M80,-80 L80,-110" stroke="#E8828A" stroke-width="8" stroke-linecap="round"/>
+            <path d="M80,-115 C80,-130 65,-138 58,-125 C51,-138 36,-130 36,-115 C36,-100 58,-88 58,-88 C58,-88 80,-100 80,-115Z" fill="#FF8FA3" opacity="0.8"/>
+          </g>
+        </svg>
+      </div>
+      <h2>おうち当番</h2>
+      <p class="login-subtitle">家族の家事管理アプリ</p>
+      <div id="login-form"></div>
+    </div>
+  </div>
+
   <header class="app-header">
     <h1>おうち当番</h1>
   </header>
@@ -74,6 +99,27 @@
       <span>AI相談</span>
     </button>
   </nav>
+
+  <!-- ステータス選択モーダル -->
+  <div id="status-modal" class="modal hidden">
+    <div class="modal-backdrop" data-action="close-modal"></div>
+    <div class="modal-sheet">
+      <h3>ステータスを選択</h3>
+      <button class="status-option done" data-action="set-status" data-status="done">&#10003; やった</button>
+      <button class="status-option not-done" data-action="set-status" data-status="not_done">&#10007; やらなかった</button>
+      <button class="status-option carry-over" data-action="set-status" data-status="carry_over">&#8594; 明日に持ち越し</button>
+      <button class="status-option other" data-action="set-status" data-status="other">&#8230; その他</button>
+    </div>
+  </div>
+
+  <!-- ルーレットモーダル -->
+  <div id="roulette-modal" class="modal hidden">
+    <div class="modal-backdrop" data-action="close-roulette"></div>
+    <div class="modal-sheet roulette-sheet">
+      <h3>ルーレット</h3>
+      <div id="roulette-container"></div>
+    </div>
+  </div>
 
   <p class="ios-note">※ iOSではプッシュ通知が届かない場合があります</p>
 
