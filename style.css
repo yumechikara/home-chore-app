@@ -678,6 +678,43 @@ main {
   font-size: 11px;
 }
 
+/* 招待コード */
+.invite-code-output {
+  margin-top: 8px;
+}
+.invite-code-text {
+  width: 100%;
+  font-size: 11px;
+  font-family: monospace;
+  word-break: break-all;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 8px;
+  background: var(--color-card-bg);
+  resize: none;
+}
+#invite-code-input {
+  width: 100%;
+  font-size: 12px;
+  font-family: monospace;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 8px;
+  resize: none;
+}
+#invite-apply-result {
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+/* 外部サービス連携プルダウン内部 */
+.external-services-inner {
+  padding: 8px 0;
+}
+.external-services-inner .form-group {
+  margin-bottom: 10px;
+}
+
 /* ============================================================
    チャット
    ============================================================ */

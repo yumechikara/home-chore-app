@@ -3,7 +3,7 @@
 // ============================================================
 
 // --- Constants ---
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.1.0';
 const DEFAULT_CHORES = [
   { id: 'c1', name: 'ゴミ出し', difficulty: 2 },
   { id: 'c2', name: '食事作り', difficulty: 3 },
@@ -229,6 +229,48 @@ async function syncFromGAS() {
     if (result.points) savePoints(result.points);
     if (result.requests) saveRequests(result.requests);
     state.lastSync = new Date();
+  }
+}
+
+// ============================================================
+// Invite Code
+// ============================================================
+function generateInviteCode() {
+  const data = {
+    g: settings.gasWebAppUrl || '',
+    a: settings.memberA || '',
+    b: settings.memberB || '',
+    ea: settings.emailA || '',
+    eb: settings.emailB || '',
+    ga: settings.garbageAreaId || '155',
+    wl: settings.weatherLat || '34.7333',
+    wn: settings.weatherLon || '135.3417',
+    si: settings.spreadsheetId || '',
+    sk: settings.sheetsApiKey || '',
+    ck: settings.claudeApiKey || ''
+  };
+  return btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+}
+
+function applyInviteCode(code) {
+  try {
+    const json = decodeURIComponent(escape(atob(code.trim())));
+    const d = JSON.parse(json);
+    if (d.g) settings.gasWebAppUrl = d.g;
+    if (d.a) settings.memberA = d.a;
+    if (d.b) settings.memberB = d.b;
+    if (d.ea) settings.emailA = d.ea;
+    if (d.eb) settings.emailB = d.eb;
+    if (d.ga) settings.garbageAreaId = d.ga;
+    if (d.wl) settings.weatherLat = d.wl;
+    if (d.wn) settings.weatherLon = d.wn;
+    if (d.si) settings.spreadsheetId = d.si;
+    if (d.sk) settings.sheetsApiKey = d.sk;
+    if (d.ck) settings.claudeApiKey = d.ck;
+    saveSettingsToLocal();
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: '招待コードが正しくありません' };
   }
 }
 
@@ -719,22 +761,16 @@ function renderSettings() {
         <p class="form-hint">西宮市 = 34.7333, 135.3417（APIキー不要）</p>
       </div>
 
-      <div class="form-section-title">外部サービス連携</div>
+      <div class="form-section-title">招待コード</div>
       <div class="form-group">
-        <label>GAS Web App URL</label>
-        <input type="url" id="set-gasWebAppUrl" value="${settings.gasWebAppUrl}" placeholder="https://script.google.com/macros/s/.../exec">
+        <button class="btn btn-secondary btn-block" data-action="generate-invite">招待コードを発行</button>
+        <div id="invite-code-output" class="invite-code-output" style="display:none;"></div>
       </div>
       <div class="form-group">
-        <label>スプレッドシートID</label>
-        <input type="text" id="set-spreadsheetId" value="${settings.spreadsheetId}" placeholder="1ABC...xyz">
-      </div>
-      <div class="form-group">
-        <label>Sheets API キー</label>
-        <input type="text" id="set-sheetsApiKey" value="${settings.sheetsApiKey}" placeholder="AIza...">
-      </div>
-      <div class="form-group">
-        <label>Claude API キー</label>
-        <input type="password" id="set-claudeApiKey" value="${settings.claudeApiKey}" placeholder="sk-ant-...">
+        <label>招待コードを入力（相手から受け取ったコード）</label>
+        <textarea id="invite-code-input" rows="2" placeholder="招待コードを貼り付け"></textarea>
+        <button class="btn btn-primary btn-block" data-action="apply-invite" style="margin-top:6px;">コードを適用</button>
+        <div id="invite-apply-result"></div>
       </div>
 
       <button class="btn btn-primary btn-block" data-action="save-settings" style="margin-top:16px;">設定を保存</button>
@@ -755,6 +791,29 @@ function renderSettings() {
       <summary>ログイン履歴</summary>
       <div id="login-history-list" class="login-history-list">
         <p class="empty-state">読み込み中...</p>
+      </div>
+    </details>
+
+    <details class="login-history-section">
+      <summary>外部サービス連携</summary>
+      <div class="external-services-inner">
+        <div class="form-group">
+          <label>GAS Web App URL</label>
+          <input type="url" id="set-gasWebAppUrl" value="${settings.gasWebAppUrl}" placeholder="https://script.google.com/macros/s/.../exec">
+        </div>
+        <div class="form-group">
+          <label>スプレッドシートID</label>
+          <input type="text" id="set-spreadsheetId" value="${settings.spreadsheetId}" placeholder="1ABC...xyz">
+        </div>
+        <div class="form-group">
+          <label>Sheets API キー</label>
+          <input type="text" id="set-sheetsApiKey" value="${settings.sheetsApiKey}" placeholder="AIza...">
+        </div>
+        <div class="form-group">
+          <label>Claude API キー</label>
+          <input type="password" id="set-claudeApiKey" value="${settings.claudeApiKey}" placeholder="sk-ant-...">
+        </div>
+        <button class="btn btn-primary btn-block" data-action="save-settings" style="margin-top:8px;">保存</button>
       </div>
     </details>
 
@@ -1042,6 +1101,43 @@ document.addEventListener('click', async (e) => {
     case 'show-register': renderLoginScreen('register'); break;
     case 'logout': clearAuth(); showLoginScreen(); break;
 
+    // --- Invite Code ---
+    case 'generate-invite': {
+      const code = generateInviteCode();
+      const out = document.getElementById('invite-code-output');
+      if (out) {
+        out.style.display = 'block';
+        out.innerHTML = `<p class="form-hint" style="margin-bottom:4px;">このコードを相手に送ってください:</p>
+          <textarea class="invite-code-text" readonly rows="3">${code}</textarea>
+          <button class="btn btn-secondary btn-block" data-action="copy-invite" style="margin-top:4px;">コピー</button>`;
+      }
+      break;
+    }
+    case 'copy-invite': {
+      const textarea = document.querySelector('.invite-code-text');
+      if (textarea) {
+        navigator.clipboard.writeText(textarea.value).then(() => {
+          target.textContent = 'コピーしました!';
+          setTimeout(() => { target.textContent = 'コピー'; }, 2000);
+        });
+      }
+      break;
+    }
+    case 'apply-invite': {
+      const code = document.getElementById('invite-code-input')?.value;
+      const resultEl = document.getElementById('invite-apply-result');
+      if (!code?.trim()) { resultEl.textContent = 'コードを入力してください'; return; }
+      const result = applyInviteCode(code);
+      if (result.success) {
+        resultEl.innerHTML = '<span style="color:#3B6D11">設定を適用しました!</span>';
+        syncFromGAS();
+        setTimeout(() => renderSettings(), 500);
+      } else {
+        resultEl.innerHTML = `<span style="color:#C53030">${result.error}</span>`;
+      }
+      break;
+    }
+
     // --- Chore Status ---
     case 'quick-done': {
       const choreId = target.getAttribute('data-chore-id');
@@ -1225,8 +1321,7 @@ document.querySelector('.bottom-nav')?.addEventListener('click', (e) => {
 // ============================================================
 function initApp() {
   loadSettings();
-  const hasSettings = settings.memberA || settings.memberB;
-  switchTab(hasSettings ? 'today' : 'settings');
+  switchTab('today');
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
   }
