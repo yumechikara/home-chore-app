@@ -3,6 +3,7 @@
 // ============================================================
 
 // --- Constants ---
+const APP_VERSION = '1.0.0';
 const DEFAULT_CHORES = [
   { id: 'c1', name: 'ゴミ出し', difficulty: 2 },
   { id: 'c2', name: '食事作り', difficulty: 3 },
@@ -891,6 +892,7 @@ function renderLoginScreen(mode) {
       ${isRegister ? 'ログインに戻る' : '新規登録はこちら'}
     </button>
     <p class="login-info">GAS Web App URLが未設定の場合はローカルモードで動作します。<br>設定からGAS URLを入力するとクロスデバイス同期が有効になります。</p>
+    <p class="login-version">v${APP_VERSION}</p>
   `;
 }
 

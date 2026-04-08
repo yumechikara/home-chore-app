@@ -157,6 +157,13 @@ body {
   margin-top: 20px;
   line-height: 1.5;
 }
+.login-version {
+  color: var(--color-text-sub);
+  font-size: 11px;
+  text-align: center;
+  margin-top: 8px;
+  opacity: 0.6;
+}
 
 /* ============================================================
    ヘッダー
