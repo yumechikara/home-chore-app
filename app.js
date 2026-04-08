@@ -236,7 +236,6 @@ async function syncFromGAS() {
 // ============================================================
 async function handleLogin(email, pin) {
   if (!settings.gasWebAppUrl) {
-    // Offline mode: just save auth locally
     const auth = { email, displayName: email.split('@')[0], token: 'local_' + Date.now(), expiry: Date.now() + 30 * 86400000 };
     saveAuth(auth);
     return { success: true };
@@ -245,8 +244,13 @@ async function handleLogin(email, pin) {
   if (result && result.success) {
     saveAuth({ email, displayName: result.displayName, token: result.token, expiry: result.expiry });
     if (result.settings) { settings = { ...settings, ...result.settings }; saveSettingsToLocal(); }
+    return result;
   }
-  return result || { success: false, error: '通信エラーが発生しました' };
+  if (result && result.error) return result;
+  // GAS通信失敗 → ローカルモードにフォールバック
+  const auth = { email, displayName: email.split('@')[0], token: 'local_' + Date.now(), expiry: Date.now() + 30 * 86400000 };
+  saveAuth(auth);
+  return { success: true, warning: 'サーバーに接続できないためローカルモードでログインしました' };
 }
 
 async function handleRegister(email, displayName, pin) {
@@ -258,8 +262,13 @@ async function handleRegister(email, displayName, pin) {
   const result = await gasPost('register', { email, displayName, pin, userAgent: navigator.userAgent });
   if (result && result.success) {
     saveAuth({ email, displayName, token: result.token, expiry: result.expiry });
+    return result;
   }
-  return result || { success: false, error: '通信エラーが発生しました' };
+  if (result && result.error) return result;
+  // GAS通信失敗 → ローカルモードにフォールバック
+  const auth = { email, displayName, token: 'local_' + Date.now(), expiry: Date.now() + 30 * 86400000 };
+  saveAuth(auth);
+  return { success: true, warning: 'サーバーに接続できないためローカルモードで登録しました' };
 }
 
 // ============================================================
@@ -1002,7 +1011,10 @@ document.addEventListener('click', async (e) => {
       target.disabled = true;
       target.textContent = 'ログイン中...';
       const result = await handleLogin(email, pin);
-      if (result.success) { hideLoginScreen(); initApp(); }
+      if (result.success) {
+        hideLoginScreen(); initApp();
+        if (result.warning) setTimeout(() => alert(result.warning), 300);
+      }
       else { errEl.textContent = result.error || 'ログインに失敗しました'; target.disabled = false; target.textContent = 'ログイン'; }
       break;
     }
@@ -1017,7 +1029,10 @@ document.addEventListener('click', async (e) => {
       target.disabled = true;
       target.textContent = '登録中...';
       const result = await handleRegister(email, name, pin);
-      if (result.success) { hideLoginScreen(); initApp(); }
+      if (result.success) {
+        hideLoginScreen(); initApp();
+        if (result.warning) setTimeout(() => alert(result.warning), 300);
+      }
       else { errEl.textContent = result.error || '登録に失敗しました'; target.disabled = false; target.textContent = '新規登録'; }
       break;
     }
