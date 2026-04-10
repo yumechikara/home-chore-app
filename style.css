@@ -478,48 +478,85 @@ main {
 }
 
 /* ============================================================
-   ポイント
+   ポイント（綱引きゲージ）
    ============================================================ */
-.points-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-.point-card {
+.tow-gauge-wrapper {
   background: var(--color-card);
-  border-radius: 12px;
-  padding: 20px 16px;
-  text-align: center;
+  border-radius: 16px;
+  padding: 20px 16px 16px;
+  margin-bottom: 16px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  text-align: center;
 }
-.point-card .member-name {
-  font-size: 14px;
+.tow-labels-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.tow-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 60px;
+}
+.tow-label-a .tow-total { color: var(--color-primary); }
+.tow-label-b .tow-total { color: var(--color-accent); }
+.tow-name {
+  font-size: 13px;
   color: var(--color-text-sub);
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
-.point-card .point-value {
-  font-size: 36px;
+.tow-total {
+  font-size: 22px;
   font-weight: 800;
-  color: var(--color-primary);
 }
-.point-card .point-label {
-  font-size: 12px;
-  color: var(--color-text-sub);
-}
-.progress-bar {
-  width: 100%;
-  height: 8px;
+.tow-gauge {
+  position: relative;
+  height: 28px;
   background: var(--color-border);
-  border-radius: 4px;
+  border-radius: 14px;
   overflow: hidden;
-  margin-top: 8px;
+  margin: 8px 0;
 }
-.progress-bar .fill {
+.tow-center-line {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--color-text);
+  transform: translateX(-50%);
+  z-index: 3;
+}
+.tow-threshold {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  border-left: 2px dashed var(--color-text-sub);
+  opacity: 0.4;
+  z-index: 2;
+}
+.tow-threshold-left  { left: calc(50% - 16.67%); }
+.tow-threshold-right { left: calc(50% + 16.67%); }
+.tow-fill {
+  position: absolute;
+  top: 0;
   height: 100%;
-  background: var(--color-accent);
-  border-radius: 4px;
-  transition: width 0.3s;
+  border-radius: 14px;
+  transition: left 0.5s ease, width 0.5s ease;
+  z-index: 1;
+}
+.tow-fill-a {
+  background: linear-gradient(270deg, var(--color-primary-light), var(--color-primary));
+}
+.tow-fill-b {
+  background: linear-gradient(90deg, var(--color-accent-light), var(--color-accent));
+}
+.tow-diff {
+  margin-top: 6px;
+  font-size: 18px;
+  font-weight: 700;
 }
 .roulette-trigger {
   text-align: center;
@@ -676,43 +713,6 @@ main {
 .login-history-device {
   color: var(--color-text-sub);
   font-size: 11px;
-}
-
-/* 招待コード */
-.invite-code-output {
-  margin-top: 8px;
-}
-.invite-code-text {
-  width: 100%;
-  font-size: 11px;
-  font-family: monospace;
-  word-break: break-all;
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  padding: 8px;
-  background: var(--color-card-bg);
-  resize: none;
-}
-#invite-code-input {
-  width: 100%;
-  font-size: 12px;
-  font-family: monospace;
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  padding: 8px;
-  resize: none;
-}
-#invite-apply-result {
-  font-size: 13px;
-  margin-top: 4px;
-}
-
-/* 外部サービス連携プルダウン内部 */
-.external-services-inner {
-  padding: 8px 0;
-}
-.external-services-inner .form-group {
-  margin-bottom: 10px;
 }
 
 /* ============================================================
@@ -965,4 +965,222 @@ main {
   padding: 1px 6px;
   border-radius: 8px;
   margin-left: 4px;
+}
+
+/* ============================================================
+   v1.3.0: ストリークバッジ
+   ============================================================ */
+.streak-badge {
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  color: #7B3F00;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 20px;
+  text-align: center;
+  margin: 8px 0;
+  display: inline-block;
+}
+
+/* ============================================================
+   v1.3.0: 頻度・担当者バッジ
+   ============================================================ */
+.freq-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 600;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+.freq-daily { background: #E6F1FB; color: #185FA5; }
+.freq-weekly { background: #EAF3DE; color: #3B6D11; }
+.freq-biweekly { background: #FAEEDA; color: #854F0B; }
+.freq-monthly { background: #FBEAF0; color: #993556; }
+.assignee-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 600;
+  background: #F0E6FF;
+  color: #5B21B6;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+/* ============================================================
+   v1.3.0: 買い物メモ
+   ============================================================ */
+.shopping-memo { padding: 12px 16px; }
+.memo-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 14px;
+}
+.memo-item:last-child { border-bottom: none; }
+.memo-item.memo-done label { text-decoration: line-through; opacity: 0.5; }
+.memo-item label { display: flex; align-items: center; gap: 6px; flex: 1; cursor: pointer; }
+.memo-add-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--color-border);
+}
+.memo-add-row input {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+/* ============================================================
+   v1.3.0: 月間レポート
+   ============================================================ */
+.monthly-rate {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.monthly-bars { display: flex; flex-direction: column; gap: 8px; }
+.monthly-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.monthly-bar-row > span { width: 50px; flex-shrink: 0; font-weight: 600; }
+.monthly-bar {
+  flex: 1;
+  height: 24px;
+  background: var(--color-border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.monthly-fill {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  padding-left: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: white;
+  min-width: fit-content;
+  transition: width 0.5s;
+}
+.monthly-fill.fill-b { background: var(--color-accent); }
+
+/* ============================================================
+   v1.3.0: 家事エディター拡張
+   ============================================================ */
+.chore-editor-row1 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.chore-name-input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font-size: 14px;
+}
+.chore-editor-btns {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.btn-move {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  border: none;
+  border-radius: 4px;
+  width: 28px;
+  height: 28px;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-move:active { opacity: 0.7; }
+.chore-editor-row2 {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.chore-editor-row2 select {
+  flex: 1;
+  padding: 6px 4px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font-size: 12px;
+}
+.chore-editor-row3 {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+.day-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-sub);
+  margin-right: 2px;
+}
+.day-check {
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  cursor: pointer;
+}
+.day-check input[type="checkbox"] { width: 14px; height: 14px; }
+
+/* ============================================================
+   v1.3.0: 完了写真ボタン
+   ============================================================ */
+.btn-photo {
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 11px;
+  color: var(--color-text-sub);
+  cursor: pointer;
+  margin-left: 4px;
+}
+.btn-photo.has-photo {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+  border-color: var(--color-success);
+}
+
+/* ============================================================
+   v1.3.0: ルーレット景品エディター
+   ============================================================ */
+.prize-editor-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.prize-editor-item:last-child { border-bottom: none; }
+.prize-editor-item input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font-size: 14px;
 }

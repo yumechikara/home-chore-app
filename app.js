@@ -3,16 +3,59 @@
 // ============================================================
 
 // --- Constants ---
-const APP_VERSION = '1.1.0';
-const DEFAULT_CHORES = [
-  { id: 'c1', name: 'ゴミ出し', difficulty: 2 },
-  { id: 'c2', name: '食事作り', difficulty: 3 },
-  { id: 'c3', name: '食器洗い', difficulty: 2 },
-  { id: 'c4', name: '風呂掃除', difficulty: 2 },
-  { id: 'c5', name: 'トイレ掃除', difficulty: 2 },
-  { id: 'c6', name: '床掃除・掃除機', difficulty: 2 },
-  { id: 'c7', name: '飲み物・日用品買い出し', difficulty: 1 }
+const APP_VERSION = '1.4.2';
+const CHANGELOG = [
+  { version: '1.4.2', date: '2026-04-10', changes: [
+    'デプロイワークフローを修正（auto-merge 完了後に自動デプロイされるように変更）'
+  ]},
+  { version: '1.4.1', date: '2026-04-10', changes: [
+    'ログインフォームで「通信エラー」が表示される不具合を修正',
+    'GASサーバーからの技術的エラー時は自動的にローカルモードへフォールバック'
+  ]},
+  { version: '1.4.0', date: '2026-04-09', changes: [
+    'ポイントを綱引きゲージに変更（2人の差を1本バーで可視化）',
+    'ルーレット条件変更（10pt差以上でリード側が回せる）'
+  ]},
+  { version: '1.3.0', date: '2026-04-08', changes: [
+    '家事の頻度設定（毎日/週1/隔週/月1）',
+    '家事の実施曜日指定',
+    'デフォルト担当者の設定',
+    '買い物メモ（共有リスト）',
+    '連続達成バッジ（ストリーク）',
+    '月間レポート（完了率・ポイント推移）',
+    'ルーレット景品カスタマイズ',
+    'リマインダー通知の強化',
+    '家事の並び替え（上下ボタン）',
+    '完了写真の記録'
+  ]},
+  { version: '1.2.0', date: '2026-04-08', changes: [
+    'アップデート履歴ページを追加',
+    '家事チェックリストの表示名を修正（メール→メンバー名）',
+    'ルーレットの表示バグ修正（全家事がパイ形で表示）',
+    '設定画面にバージョン表示追加'
+  ]},
+  { version: '1.1.0', date: '2026-04-08', changes: [
+    '招待コード機能を追加',
+    'ログイン後は「今日」タブで開始するように変更',
+    '外部サービス連携をプルダウン表示に変更'
+  ]},
+  { version: '1.0.0', date: '2026-04-08', changes: [
+    '天気・環境情報カードを追加（8項目）',
+    '新規登録・ログインの通信エラーをフォールバックで修正',
+    'バージョン表示を追加'
+  ]}
 ];
+const FREQUENCY_LABELS = { daily: '毎日', weekly: '週1回', biweekly: '隔週', monthly: '月1回' };
+const DEFAULT_CHORES = [
+  { id: 'c1', name: 'ゴミ出し', difficulty: 2, frequency: 'daily', days: [1,4], assignee: '' },
+  { id: 'c2', name: '食事作り', difficulty: 3, frequency: 'daily', days: [], assignee: '' },
+  { id: 'c3', name: '食器洗い', difficulty: 2, frequency: 'daily', days: [], assignee: '' },
+  { id: 'c4', name: '風呂掃除', difficulty: 2, frequency: 'weekly', days: [], assignee: '' },
+  { id: 'c5', name: 'トイレ掃除', difficulty: 2, frequency: 'weekly', days: [], assignee: '' },
+  { id: 'c6', name: '床掃除・掃除機', difficulty: 2, frequency: 'weekly', days: [], assignee: '' },
+  { id: 'c7', name: '飲み物・日用品買い出し', difficulty: 1, frequency: 'weekly', days: [], assignee: '' }
+];
+const DEFAULT_PRIZES = ['マッサージ券', '好きなご飯リクエスト権', '家事1回パス券', 'おやつ買ってきて券'];
 
 const GARBAGE_COLORS = {
   'もやすごみ': 'burn', '燃やすごみ': 'burn', '可燃ごみ': 'burn', '可燃': 'burn',
@@ -97,7 +140,11 @@ function isAuthenticated() {
 }
 function getDisplayName() {
   const auth = loadAuth();
-  return auth ? auth.displayName || auth.email : '';
+  if (!auth) return '';
+  const email = auth.email;
+  if (settings.emailA && email === settings.emailA && settings.memberA) return settings.memberA;
+  if (settings.emailB && email === settings.emailB && settings.memberB) return settings.memberB;
+  return auth.displayName || email;
 }
 
 // ============================================================
@@ -122,9 +169,28 @@ function saveSettingsToLocal() { localStorage.setItem('ouchi_settings', JSON.str
 function loadChores() {
   try {
     const c = JSON.parse(localStorage.getItem('ouchi_chores'));
-    if (c && c.length) return c;
+    if (c && c.length) return c.map(ch => ({
+      frequency: 'weekly', days: [], assignee: '', ...ch
+    }));
   } catch {}
   return DEFAULT_CHORES.map(c => ({ ...c, createdBy: 'system', active: true }));
+}
+function loadShoppingMemo() {
+  try { return JSON.parse(localStorage.getItem('ouchi_shopping')) || []; } catch { return []; }
+}
+function saveShoppingMemo(items) { localStorage.setItem('ouchi_shopping', JSON.stringify(items)); }
+function loadPrizes() {
+  try { const p = JSON.parse(localStorage.getItem('ouchi_prizes')); if (p && p.length) return p; } catch {}
+  return [...DEFAULT_PRIZES];
+}
+function savePrizes(p) { localStorage.setItem('ouchi_prizes', JSON.stringify(p)); }
+function loadPhotos() {
+  try { return JSON.parse(localStorage.getItem('ouchi_photos')) || {}; } catch { return {}; }
+}
+function savePhoto(choreId, weekKey, dataUrl) {
+  const photos = loadPhotos();
+  photos[`${weekKey}_${choreId}`] = dataUrl;
+  localStorage.setItem('ouchi_photos', JSON.stringify(photos));
 }
 function saveChores(chores) { localStorage.setItem('ouchi_chores', JSON.stringify(chores)); }
 
@@ -169,15 +235,29 @@ function saveWeeklyChores(weekKey, chores) {
   localStorage.setItem('ouchi_weekly_' + weekKey, JSON.stringify({ weekKey, chores }));
 }
 
+function shouldShowChoreThisWeek(chore, weekKey) {
+  const freq = chore.frequency || 'weekly';
+  if (freq === 'daily' || freq === 'weekly') return true;
+  if (freq === 'monthly') {
+    const weekNum = parseInt(weekKey.split('-W')[1]);
+    return weekNum % 4 === 1;
+  }
+  if (freq === 'biweekly') {
+    const weekNum = parseInt(weekKey.split('-W')[1]);
+    return weekNum % 2 === 0;
+  }
+  return true;
+}
+
 function initWeekIfNeeded(weekKey) {
   let chores = loadWeeklyChores(weekKey);
   if (chores) return chores;
-  const choreList = loadChores().filter(c => c.active);
+  const choreList = loadChores().filter(c => c.active && shouldShowChoreThisWeek(c, weekKey));
   chores = choreList.map(c => ({
     id: c.id, name: c.name, difficulty: c.difficulty || 1,
+    frequency: c.frequency || 'weekly', days: c.days || [], assignee: c.assignee || '',
     status: null, doneBy: null, doneAt: null, date: null, points: c.difficulty || 1
   }));
-  // Pull carry-overs from previous week
   const prevMonday = getWeekMonday(state.currentWeekOffset - 1);
   const prevKey = getWeekKey(prevMonday);
   const prevChores = loadWeeklyChores(prevKey);
@@ -189,6 +269,21 @@ function initWeekIfNeeded(weekKey) {
   }
   saveWeeklyChores(weekKey, chores);
   return chores;
+}
+
+function getStreak() {
+  let streak = 0;
+  const d = new Date();
+  for (let i = 0; i < 30; i++) {
+    d.setDate(d.getDate() - (i === 0 ? 0 : 1));
+    const wk = getWeekKey(d);
+    const chores = loadWeeklyChores(wk);
+    if (!chores) break;
+    const dayChores = chores.filter(c => c.date === formatDate(d));
+    if (dayChores.length > 0 && dayChores.every(c => c.status === 'done')) { streak++; }
+    else if (dayChores.length > 0) break;
+  }
+  return streak;
 }
 
 // ============================================================
@@ -277,6 +372,13 @@ function applyInviteCode(code) {
 // ============================================================
 // Auth Handlers
 // ============================================================
+// GASから返ってきたエラー文字列がユーザー起因(PIN違い・未登録など)か判定する。
+// ユーザー起因ならそのまま表示、それ以外(通信/サーバー内部)はローカルモードへフォールバック。
+function isAuthUserError(msg) {
+  if (!msg || typeof msg !== 'string') return false;
+  return /PIN|pin|未登録|登録済|既に|存在しません|見つかりません|not ?found|invalid|unauthorized/i.test(msg);
+}
+
 async function handleLogin(email, pin) {
   if (!settings.gasWebAppUrl) {
     const auth = { email, displayName: email.split('@')[0], token: 'local_' + Date.now(), expiry: Date.now() + 30 * 86400000 };
@@ -289,8 +391,9 @@ async function handleLogin(email, pin) {
     if (result.settings) { settings = { ...settings, ...result.settings }; saveSettingsToLocal(); }
     return result;
   }
-  if (result && result.error) return result;
-  // GAS通信失敗 → ローカルモードにフォールバック
+  // ユーザー起因のエラーのみ表示
+  if (result && result.error && isAuthUserError(result.error)) return result;
+  // GAS通信失敗 / サーバー内部エラー → ローカルモードにフォールバック
   const auth = { email, displayName: email.split('@')[0], token: 'local_' + Date.now(), expiry: Date.now() + 30 * 86400000 };
   saveAuth(auth);
   return { success: true, warning: 'サーバーに接続できないためローカルモードでログインしました' };
@@ -307,8 +410,8 @@ async function handleRegister(email, displayName, pin) {
     saveAuth({ email, displayName, token: result.token, expiry: result.expiry });
     return result;
   }
-  if (result && result.error) return result;
-  // GAS通信失敗 → ローカルモードにフォールバック
+  if (result && result.error && isAuthUserError(result.error)) return result;
+  // GAS通信失敗 / サーバー内部エラー → ローカルモードにフォールバック
   const auth = { email, displayName, token: 'local_' + Date.now(), expiry: Date.now() + 30 * 86400000 };
   saveAuth(auth);
   return { success: true, warning: 'サーバーに接続できないためローカルモードで登録しました' };
@@ -550,11 +653,19 @@ function renderToday() {
   const d = new Date();
   const todayStr = today();
   const dayName = DAY_NAMES[d.getDay()];
+  const dayIdx = d.getDay();
   const garbage = getGarbageForDate(todayStr);
   const weekKey = getWeekKey(d);
-  const chores = initWeekIfNeeded(weekKey);
-  const myName = getDisplayName();
+  const allChores = initWeekIfNeeded(weekKey);
+  // Filter: daily chores show by day-of-week, weekly+ show all
+  const chores = allChores.filter(c => {
+    if (c.frequency === 'daily' && c.days && c.days.length > 0) return c.days.includes(dayIdx);
+    return true;
+  });
   const syncTime = state.lastSync ? state.lastSync.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }) : '-';
+  const streak = getStreak();
+  const streakHtml = streak > 0 ? `<div class="streak-badge">${streak}日連続達成!</div>` : '';
+  const photos = loadPhotos();
 
   const requests = loadRequests().filter(r => !r.completed);
   const requestHtml = requests.length > 0 ? requests.map(r =>
@@ -565,9 +676,27 @@ function renderToday() {
     </div>`
   ).join('') : '';
 
+  // Shopping memo
+  const memo = loadShoppingMemo();
+  const memoHtml = `
+    <p class="section-title">買い物メモ</p>
+    <div class="card shopping-memo">
+      <div id="memo-list">${memo.map((m, i) =>
+        `<div class="memo-item ${m.done ? 'memo-done' : ''}">
+          <label><input type="checkbox" data-action="toggle-memo" data-idx="${i}" ${m.done ? 'checked' : ''}> ${m.text}</label>
+          <button class="btn-del" data-action="delete-memo" data-idx="${i}">✕</button>
+        </div>`
+      ).join('') || '<p class="empty-state">メモなし</p>'}</div>
+      <div class="memo-add-row">
+        <input type="text" id="memo-input" placeholder="追加...">
+        <button class="btn btn-complete" data-action="add-memo">+</button>
+      </div>
+    </div>`;
+
   el.innerHTML = `
     <div class="today-date">${d.getMonth() + 1}月${d.getDate()}日</div>
     <div class="today-day">${d.getFullYear()}年 ${dayName}曜日</div>
+    ${streakHtml}
     <div id="weather-area"><div class="weather-card weather-loading">天気情報を読み込み中...</div></div>
     <p class="section-title">ゴミ出し</p>
     <div class="card">
@@ -578,12 +707,17 @@ function renderToday() {
       <span>最終同期: ${syncTime}</span>
       <button data-action="sync-now">更新</button>
     </div>
-    <p class="section-title">今週の家事チェックリスト</p>
+    <p class="section-title">今日の家事</p>
     <div class="card">
-      ${chores.length === 0 ? '<p class="empty-state">家事が登録されていません。設定から追加してください。</p>' :
+      ${chores.length === 0 ? '<p class="empty-state">今日の家事はありません</p>' :
         chores.map(c => {
           const badge = c.status ? `<span class="status-badge ${c.status}">${STATUS_LABELS[c.status]}${c.doneBy ? ' (' + c.doneBy + ')' : ''}</span>` : '';
           const carryBadge = c.carryOver ? '<span class="carry-badge">持ち越し</span>' : '';
+          const freqBadge = `<span class="freq-badge freq-${c.frequency || 'weekly'}">${FREQUENCY_LABELS[c.frequency || 'weekly']}</span>`;
+          const assigneeBadge = c.assignee ? `<span class="assignee-badge">${c.assignee}</span>` : '';
+          const photoKey = `${weekKey}_${c.id}`;
+          const hasPhoto = photos[photoKey];
+          const photoBtn = c.status === 'done' ? `<button class="btn-photo ${hasPhoto ? 'has-photo' : ''}" data-action="take-photo" data-chore-id="${c.id}" data-week="${weekKey}">${hasPhoto ? '写真あり' : '写真'}</button>` : '';
           const actions = !c.status ? `
             <div class="chore-actions">
               <button class="btn btn-complete" data-action="quick-done" data-chore-id="${c.id}" data-week="${weekKey}">やった</button>
@@ -591,8 +725,8 @@ function renderToday() {
             </div>` : '';
           return `<div class="chore-item ${c.status ? 'chore-' + c.status : ''}">
             <div class="chore-info">
-              <div class="chore-name">${c.name}${carryBadge}</div>
-              <div class="chore-difficulty">${difficultyStars(c.difficulty)} (${c.difficulty}pt)</div>
+              <div class="chore-name">${c.name} ${freqBadge}${assigneeBadge}${carryBadge}</div>
+              <div class="chore-difficulty">${difficultyStars(c.difficulty)} (${c.difficulty}pt) ${photoBtn}</div>
               ${badge}
             </div>
             ${actions}
@@ -600,9 +734,9 @@ function renderToday() {
         }).join('')
       }
     </div>
+    ${memoHtml}
   `;
 
-  // Async weather load
   fetchWeatherData().then(data => {
     const area = document.getElementById('weather-area');
     if (area) area.innerHTML = renderWeatherCard(data);
@@ -658,9 +792,18 @@ function renderPoints() {
   const nameB = settings.memberB || 'メンバーB';
   const myName = getDisplayName();
   const myKey = myName === settings.memberB ? 'B' : 'A';
-  const otherKey = myKey === 'A' ? 'B' : 'A';
-  const myPts = pts[myKey]?.total || 0;
-  const canSpin = myPts >= 10;
+
+  const ptsA = pts.A?.total || 0;
+  const ptsB = pts.B?.total || 0;
+  const diff = ptsA - ptsB;
+  const absDiff = Math.abs(diff);
+  const leader = diff > 0 ? 'A' : diff < 0 ? 'B' : null;
+  const canSpin = absDiff >= 10 && leader === myKey;
+
+  const MAX_VISUAL_DIFF = 30;
+  const fillPercent = Math.min(50, (absDiff / MAX_VISUAL_DIFF) * 50);
+  const fillLeft = diff >= 0 ? (50 - fillPercent) : 50;
+  const fillClass = diff > 0 ? 'tow-fill-a' : diff < 0 ? 'tow-fill-b' : '';
 
   const requests = loadRequests().filter(r => !r.completed);
   const requestHtml = requests.length > 0 ? `
@@ -671,25 +814,61 @@ function renderPoints() {
     </div>`).join('')}` : '';
 
   el.innerHTML = `
-    <div class="points-row">
-      <div class="point-card">
-        <div class="member-name">${nameA}</div>
-        <div class="point-value">${pts.A?.total || 0}</div>
-        <div class="point-label">ポイント</div>
-        <div class="progress-bar"><div class="fill" style="width:${Math.min(100, ((pts.A?.total || 0) % 10) * 10)}%"></div></div>
+    <div class="tow-gauge-wrapper">
+      <div class="tow-labels-row">
+        <div class="tow-label tow-label-a">
+          <span class="tow-name">${nameA}</span>
+          <span class="tow-total">${ptsA}pt</span>
+        </div>
+        <div class="tow-label tow-label-b">
+          <span class="tow-name">${nameB}</span>
+          <span class="tow-total">${ptsB}pt</span>
+        </div>
       </div>
-      <div class="point-card">
-        <div class="member-name">${nameB}</div>
-        <div class="point-value">${pts.B?.total || 0}</div>
-        <div class="point-label">ポイント</div>
-        <div class="progress-bar"><div class="fill" style="width:${Math.min(100, ((pts.B?.total || 0) % 10) * 10)}%"></div></div>
+      <div class="tow-gauge">
+        <div class="tow-threshold tow-threshold-left"></div>
+        <div class="tow-threshold tow-threshold-right"></div>
+        <div class="tow-center-line"></div>
+        <div class="tow-fill ${fillClass}" style="left:${fillLeft}%;width:${fillPercent}%"></div>
       </div>
+      <div class="tow-diff">${absDiff === 0 ? '引き分け' : (diff > 0 ? `\u2190 ${absDiff}pt\u5DEE` : `${absDiff}pt\u5DEE \u2192`)}</div>
     </div>
     ${canSpin ? `<div class="roulette-trigger">
       <button class="btn" data-action="open-roulette">🎰 ルーレットを回す！</button>
-      <p style="font-size:12px;color:var(--color-text-sub);margin-top:4px;">10ポイント消費で相手に家事をおねがいできます</p>
+      <p style="font-size:12px;color:var(--color-text-sub);margin-top:4px;">10ポイント差を消費して相手に家事をおねがいできます</p>
     </div>` : ''}
     ${requestHtml}
+    <p class="section-title">月間レポート</p>
+    <div class="card">
+      ${(() => {
+        const now = new Date();
+        const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+        let totalTasks = 0, doneTasks = 0;
+        const dailyData = [];
+        for (let day = 1; day <= now.getDate(); day++) {
+          const dd = new Date(now.getFullYear(), now.getMonth(), day);
+          const wk = getWeekKey(dd);
+          const wc = loadWeeklyChores(wk);
+          if (wc) {
+            const ds = formatDate(dd);
+            const dayChores = wc.filter(c => c.date === ds);
+            totalTasks += dayChores.length;
+            const done = dayChores.filter(c => c.status === 'done').length;
+            doneTasks += done;
+            dailyData.push({ day, done, total: dayChores.length });
+          }
+        }
+        const rate = totalTasks > 0 ? Math.round(doneTasks / totalTasks * 100) : 0;
+        const ptsA = (pts.A?.history || []).filter(h => h.type === 'earned' && h.date?.startsWith(`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`)).reduce((s,h) => s + h.points, 0);
+        const ptsB = (pts.B?.history || []).filter(h => h.type === 'earned' && h.date?.startsWith(`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`)).reduce((s,h) => s + h.points, 0);
+        const maxPts = Math.max(ptsA, ptsB, 1);
+        return `<div class="monthly-rate">今月の完了率: <strong>${rate}%</strong></div>
+          <div class="monthly-bars">
+            <div class="monthly-bar-row"><span>${nameA}</span><div class="monthly-bar"><div class="monthly-fill" style="width:${ptsA/maxPts*100}%">${ptsA}pt</div></div></div>
+            <div class="monthly-bar-row"><span>${nameB}</span><div class="monthly-bar"><div class="monthly-fill fill-b" style="width:${ptsB/maxPts*100}%">${ptsB}pt</div></div></div>
+          </div>`;
+      })()}
+    </div>
     <p class="section-title">ポイント履歴</p>
     <div class="card">
       ${[...(pts.A?.history || []), ...(pts.B?.history || [])].sort((a, b) => b.date > a.date ? 1 : -1).slice(0, 20).map(h =>
@@ -712,11 +891,31 @@ function renderSettings() {
 
   const choreEditorHtml = chores.map((c, i) => `
     <div class="chore-editor-item" data-idx="${i}">
-      <input type="text" value="${c.name}" data-field="name" data-idx="${i}">
-      <select data-field="difficulty" data-idx="${i}">
-        ${[1,2,3,4,5].map(n => `<option value="${n}" ${c.difficulty === n ? 'selected' : ''}>${'★'.repeat(n)}</option>`).join('')}
-      </select>
-      <button class="btn-del" data-action="delete-chore" data-idx="${i}">✕</button>
+      <div class="chore-editor-row1">
+        <input type="text" value="${c.name}" data-field="name" data-idx="${i}" class="chore-name-input">
+        <div class="chore-editor-btns">
+          ${i > 0 ? `<button class="btn-move" data-action="move-chore-up" data-idx="${i}">▲</button>` : ''}
+          ${i < chores.length - 1 ? `<button class="btn-move" data-action="move-chore-down" data-idx="${i}">▼</button>` : ''}
+          <button class="btn-del" data-action="delete-chore" data-idx="${i}">✕</button>
+        </div>
+      </div>
+      <div class="chore-editor-row2">
+        <select data-field="difficulty" data-idx="${i}">
+          ${[1,2,3,4,5].map(n => `<option value="${n}" ${c.difficulty === n ? 'selected' : ''}>${'★'.repeat(n)}</option>`).join('')}
+        </select>
+        <select data-field="frequency" data-idx="${i}">
+          ${Object.entries(FREQUENCY_LABELS).map(([k,v]) => `<option value="${k}" ${(c.frequency||'weekly') === k ? 'selected' : ''}>${v}</option>`).join('')}
+        </select>
+        <select data-field="assignee" data-idx="${i}">
+          <option value="" ${!c.assignee ? 'selected' : ''}>担当なし</option>
+          ${settings.memberA ? `<option value="${settings.memberA}" ${c.assignee === settings.memberA ? 'selected' : ''}>${settings.memberA}</option>` : ''}
+          ${settings.memberB ? `<option value="${settings.memberB}" ${c.assignee === settings.memberB ? 'selected' : ''}>${settings.memberB}</option>` : ''}
+        </select>
+      </div>
+      <div class="chore-editor-row3">
+        <label class="day-label">曜日:</label>
+        ${DAY_NAMES.map((dn, di) => `<label class="day-check"><input type="checkbox" data-field="day" data-idx="${i}" data-day="${di}" ${(c.days||[]).includes(di) ? 'checked' : ''}>${dn}</label>`).join('')}
+      </div>
     </div>
   `).join('');
 
@@ -784,7 +983,21 @@ function renderSettings() {
     </div>
 
     <div class="card settings-card">
-      <button class="btn btn-skip btn-block" data-action="enable-notif">通知を有効にする</button>
+      <div class="form-section-title" style="border-top:none;margin-top:0;padding-top:0;">ルーレット景品</div>
+      <div id="prize-editor">${loadPrizes().map((p, i) => `
+        <div class="prize-editor-item">
+          <input type="text" value="${p}" data-prize-idx="${i}">
+          <button class="btn-del" data-action="delete-prize" data-idx="${i}">✕</button>
+        </div>`).join('')}
+      </div>
+      <button class="btn btn-secondary btn-block" data-action="add-prize" style="margin-top:6px;">+ 景品を追加</button>
+      <button class="btn btn-primary btn-block" data-action="save-prizes" style="margin-top:6px;">景品を保存</button>
+      <p class="form-hint">家事の他に、ルーレットに景品を追加できます</p>
+    </div>
+
+    <div class="card settings-card">
+      <button class="btn btn-skip btn-block" data-action="enable-notif">リマインダー通知を有効にする</button>
+      <p class="form-hint">毎晩、未完了の家事があれば通知します</p>
     </div>
 
     <details class="login-history-section">
@@ -820,6 +1033,7 @@ function renderSettings() {
     <div style="margin-top:24px;">
       <button class="btn btn-danger btn-block" data-action="logout">ログアウト</button>
     </div>
+    <p class="login-version" style="margin-top:12px;">v${APP_VERSION} <a href="#" data-action="show-changelog" style="color:var(--color-primary);">更新履歴</a></p>
   `;
 
   // Lazy-load login history on toggle
@@ -967,21 +1181,37 @@ function hideLoginScreen() {
 // ============================================================
 // Roulette
 // ============================================================
+function makeWedgeClipPath(angleDeg) {
+  const pts = ['50% 50%', '50% 0%'];
+  const steps = Math.max(2, Math.ceil(angleDeg / 10));
+  for (let s = 0; s <= steps; s++) {
+    const a = (angleDeg * s / steps - 90) * Math.PI / 180;
+    pts.push(`${(50 + 50 * Math.cos(a)).toFixed(1)}% ${(50 + 50 * Math.sin(a)).toFixed(1)}%`);
+  }
+  return `polygon(${pts.join(', ')})`;
+}
+
 function openRoulette() {
   const modal = document.getElementById('roulette-modal');
   modal.classList.remove('hidden');
   const container = document.getElementById('roulette-container');
-  const chores = loadChores().filter(c => c.active);
-  if (chores.length === 0) { container.innerHTML = '<p>家事が登録されていません</p>'; return; }
+  const choreItems = loadChores().filter(c => c.active).map(c => ({ name: c.name, type: 'chore' }));
+  const prizeItems = loadPrizes().map(p => ({ name: p, type: 'prize' }));
+  const items = [...choreItems, ...prizeItems];
+  if (items.length === 0) { container.innerHTML = '<p>項目がありません</p>'; return; }
+  // Store items for spinRoulette
+  state.rouletteItems = items;
 
-  const sliceAngle = 360 / chores.length;
+  const sliceAngle = 360 / items.length;
   const colors = ['#FFB5C5', '#FFDAB9', '#E6F1FB', '#EAF3DE', '#FBEAF0', '#E1F5EE', '#EEEDFE', '#FAEEDA'];
+  const clipPath = makeWedgeClipPath(sliceAngle);
 
   let wheelHtml = '<div class="roulette-wheel" id="roulette-wheel">';
-  chores.forEach((c, i) => {
+  items.forEach((item, i) => {
     const angle = sliceAngle * i;
+    const halfAngle = sliceAngle / 2;
     const bg = colors[i % colors.length];
-    wheelHtml += `<div class="roulette-slice" style="transform:rotate(${angle}deg);background:${bg};">${c.name}</div>`;
+    wheelHtml += `<div class="roulette-slice" style="transform:rotate(${angle}deg);background:${bg};clip-path:${clipPath};"><span class="roulette-label" style="transform:rotate(${halfAngle}deg)">${item.name}</span></div>`;
   });
   wheelHtml += '</div>';
 
@@ -996,19 +1226,19 @@ function openRoulette() {
 }
 
 function spinRoulette() {
-  const chores = loadChores().filter(c => c.active);
-  if (!chores.length) return;
+  const items = state.rouletteItems || [];
+  if (!items.length) return;
   const spinBtn = document.getElementById('spin-btn');
   spinBtn.disabled = true;
 
   const wheel = document.getElementById('roulette-wheel');
-  const randomIdx = Math.floor(Math.random() * chores.length);
-  const sliceAngle = 360 / chores.length;
+  const randomIdx = Math.floor(Math.random() * items.length);
+  const sliceAngle = 360 / items.length;
   const targetAngle = 360 * 5 + (360 - sliceAngle * randomIdx - sliceAngle / 2);
   wheel.style.transform = `rotate(${targetAngle}deg)`;
 
   setTimeout(() => {
-    const selected = chores[randomIdx];
+    const selected = items[randomIdx];
     document.getElementById('roulette-result').textContent = `「${selected.name}」に決定！`;
 
     // Deduct points and create request
@@ -1016,7 +1246,7 @@ function spinRoulette() {
     const myName = getDisplayName();
     const myKey = myName === settings.memberB ? 'B' : 'A';
     const otherName = myKey === 'A' ? (settings.memberB || 'B') : (settings.memberA || 'A');
-    pts[myKey].total -= 10;
+    pts[myKey].total = Math.max(0, pts[myKey].total - 10);
     pts[myKey].history.push({ date: today(), choreName: selected.name, points: 10, type: 'spent', by: myName });
     savePoints(pts);
 
@@ -1050,8 +1280,20 @@ function checkAndNotify() {
   if (!chores) return;
   const pending = chores.filter(c => !c.status);
   if (pending.length > 0) {
-    new Notification('おうち当番', { body: `未完了の家事が${pending.length}件あります`, icon: './manifest.json' });
+    const names = pending.slice(0, 3).map(c => c.name).join('、');
+    const more = pending.length > 3 ? `他${pending.length - 3}件` : '';
+    new Notification('おうち当番リマインダー', {
+      body: `未完了: ${names}${more}`,
+      tag: 'ouchi-reminder'
+    });
   }
+}
+function scheduleReminder() {
+  const now = new Date();
+  const target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 21, 0, 0);
+  if (now > target) target.setDate(target.getDate() + 1);
+  const ms = target - now;
+  setTimeout(() => { checkAndNotify(); scheduleReminder(); }, ms);
 }
 
 // ============================================================
@@ -1208,6 +1450,20 @@ document.addEventListener('click', async (e) => {
       document.getElementById('roulette-modal').classList.add('hidden');
       renderPoints();
       break;
+    case 'show-changelog': {
+      const modal = document.getElementById('changelog-modal');
+      modal.classList.remove('hidden');
+      document.getElementById('changelog-content').innerHTML = CHANGELOG.map(v =>
+        `<div class="changelog-entry">
+          <div class="changelog-version">v${v.version} <span class="changelog-date">${v.date}</span></div>
+          <ul>${v.changes.map(c => `<li>${c}</li>`).join('')}</ul>
+        </div>`
+      ).join('');
+      break;
+    }
+    case 'close-changelog':
+      document.getElementById('changelog-modal').classList.add('hidden');
+      break;
 
     // --- Request ---
     case 'complete-request': {
@@ -1246,7 +1502,7 @@ document.addEventListener('click', async (e) => {
     }
     case 'add-chore': {
       const chores = loadChores();
-      chores.push({ id: 'c_' + Date.now(), name: '新しい家事', difficulty: 1, createdBy: getDisplayName(), active: true });
+      chores.push({ id: 'c_' + Date.now(), name: '新しい家事', difficulty: 1, frequency: 'weekly', days: [], assignee: '', createdBy: getDisplayName(), active: true });
       saveChores(chores);
       renderSettings();
       break;
@@ -1257,6 +1513,18 @@ document.addEventListener('click', async (e) => {
       if (idx >= 0 && idx < chores.length) { chores.splice(idx, 1); saveChores(chores); renderSettings(); }
       break;
     }
+    case 'move-chore-up': {
+      const idx = parseInt(target.getAttribute('data-idx'));
+      const chores = loadChores();
+      if (idx > 0) { [chores[idx - 1], chores[idx]] = [chores[idx], chores[idx - 1]]; saveChores(chores); renderSettings(); }
+      break;
+    }
+    case 'move-chore-down': {
+      const idx = parseInt(target.getAttribute('data-idx'));
+      const chores = loadChores();
+      if (idx < chores.length - 1) { [chores[idx], chores[idx + 1]] = [chores[idx + 1], chores[idx]]; saveChores(chores); renderSettings(); }
+      break;
+    }
     case 'save-chores': {
       const chores = loadChores();
       document.querySelectorAll('.chore-editor-item').forEach(item => {
@@ -1264,11 +1532,96 @@ document.addEventListener('click', async (e) => {
         if (idx >= 0 && idx < chores.length) {
           chores[idx].name = item.querySelector('input[data-field="name"]')?.value?.trim() || chores[idx].name;
           chores[idx].difficulty = parseInt(item.querySelector('select[data-field="difficulty"]')?.value) || 1;
+          chores[idx].frequency = item.querySelector('select[data-field="frequency"]')?.value || 'weekly';
+          chores[idx].assignee = item.querySelector('select[data-field="assignee"]')?.value || '';
+          const days = [];
+          item.querySelectorAll('input[data-field="day"]:checked').forEach(cb => days.push(parseInt(cb.getAttribute('data-day'))));
+          chores[idx].days = days;
         }
       });
       saveChores(chores);
       gasPost('saveChores', { chores });
       alert('家事リストを保存しました');
+      break;
+    }
+    // --- Prize ---
+    case 'add-prize': {
+      const prizes = loadPrizes();
+      prizes.push('新しい景品');
+      savePrizes(prizes);
+      renderSettings();
+      break;
+    }
+    case 'delete-prize': {
+      const idx = parseInt(target.getAttribute('data-idx'));
+      const prizes = loadPrizes();
+      if (idx >= 0) { prizes.splice(idx, 1); savePrizes(prizes); renderSettings(); }
+      break;
+    }
+    case 'save-prizes': {
+      const prizes = [];
+      document.querySelectorAll('.prize-editor-item input').forEach(inp => {
+        const v = inp.value.trim();
+        if (v) prizes.push(v);
+      });
+      savePrizes(prizes);
+      alert('景品を保存しました');
+      break;
+    }
+    // --- Shopping Memo ---
+    case 'add-memo': {
+      const input = document.getElementById('memo-input');
+      const text = input?.value?.trim();
+      if (!text) return;
+      const memo = loadShoppingMemo();
+      memo.push({ text, done: false });
+      saveShoppingMemo(memo);
+      renderToday();
+      break;
+    }
+    case 'toggle-memo': {
+      const idx = parseInt(target.getAttribute('data-idx'));
+      const memo = loadShoppingMemo();
+      if (memo[idx]) { memo[idx].done = !memo[idx].done; saveShoppingMemo(memo); }
+      break;
+    }
+    case 'delete-memo': {
+      const idx = parseInt(target.getAttribute('data-idx'));
+      const memo = loadShoppingMemo();
+      memo.splice(idx, 1);
+      saveShoppingMemo(memo);
+      renderToday();
+      break;
+    }
+    // --- Photo ---
+    case 'take-photo': {
+      const choreId = target.getAttribute('data-chore-id');
+      const weekKey = target.getAttribute('data-week');
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.capture = 'environment';
+      input.onchange = (ev) => {
+        const file = ev.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const maxW = 200;
+            const scale = maxW / img.width;
+            canvas.width = maxW;
+            canvas.height = img.height * scale;
+            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+            savePhoto(choreId, weekKey, canvas.toDataURL('image/jpeg', 0.5));
+            renderToday();
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      };
+      input.click();
       break;
     }
     case 'enable-notif': requestNotificationPermission(); break;
@@ -1328,6 +1681,7 @@ function initApp() {
   syncFromGAS();
   refreshGarbageCache();
   checkAndNotify();
+  scheduleReminder();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
