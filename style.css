@@ -659,22 +659,18 @@ main {
 
 /* 家事リスト管理 */
 .chore-editor-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 0;
+  display: block;
+  padding: 10px 0;
   border-bottom: 1px solid var(--color-border);
 }
 .chore-editor-item:last-child { border-bottom: none; }
 .chore-editor-item input[type="text"] {
-  flex: 1;
   padding: 8px;
   border: 1px solid var(--color-border);
   border-radius: 6px;
   font-size: 14px;
 }
 .chore-editor-item select {
-  width: 70px;
   padding: 8px 4px;
   border: 1px solid var(--color-border);
   border-radius: 6px;
