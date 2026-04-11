@@ -3,8 +3,13 @@
 // ============================================================
 
 // --- Constants ---
-const APP_VERSION = '1.5.2';
+const APP_VERSION = '1.6.0';
 const CHANGELOG = [
+  { version: '1.6.0', date: '2026-04-11', changes: [
+    '今日の家事で完了した項目を「取消」ボタンで元に戻せるように',
+    '取消時は加算したポイントも自動で減算',
+    'ポイント加算先の判定をメール紐付けベースに改善（メンバー名未設定でも正しく振り分け）'
+  ]},
   { version: '1.5.2', date: '2026-04-11', changes: [
     'ゴミ暦タブに新分別区分の概要画像を追加（西宮市公式 PDF p.4 から抜粋）',
     'PDF を見るボタンの表示文言を整理'
@@ -165,6 +170,17 @@ function getDisplayName() {
   if (settings.emailA && email === settings.emailA && settings.memberA) return settings.memberA;
   if (settings.emailB && email === settings.emailB && settings.memberB) return settings.memberB;
   return auth.displayName || email;
+}
+function getMyKey() {
+  const auth = loadAuth();
+  if (auth?.email) {
+    if (settings.emailA && auth.email === settings.emailA) return 'A';
+    if (settings.emailB && auth.email === settings.emailB) return 'B';
+  }
+  const name = getDisplayName();
+  if (settings.memberB && name === settings.memberB) return 'B';
+  if (settings.memberA && name === settings.memberA) return 'A';
+  return 'A';
 }
 
 // ============================================================
@@ -753,7 +769,10 @@ function renderToday() {
             <div class="chore-actions">
               <button class="btn btn-complete" data-action="quick-done" data-chore-id="${c.id}" data-week="${weekKey}">やった</button>
               <button class="btn btn-skip" data-action="open-status-modal" data-chore-id="${c.id}" data-week="${weekKey}">...</button>
-            </div>` : '';
+            </div>` : `
+            <div class="chore-actions">
+              <button class="btn btn-undo" data-action="undo-chore" data-chore-id="${c.id}" data-week="${weekKey}">取消</button>
+            </div>`;
           return `<div class="chore-item ${c.status ? 'chore-' + c.status : ''}">
             <div class="chore-info">
               <div class="chore-name">${c.name} ${freqBadge}${assigneeBadge}${carryBadge}</div>
@@ -913,7 +932,7 @@ function renderPoints() {
   const nameA = settings.memberA || 'メンバーA';
   const nameB = settings.memberB || 'メンバーB';
   const myName = getDisplayName();
-  const myKey = myName === settings.memberB ? 'B' : 'A';
+  const myKey = getMyKey();
 
   const ptsA = pts.A?.total || 0;
   const ptsB = pts.B?.total || 0;
@@ -1366,7 +1385,7 @@ function spinRoulette() {
     // Deduct points and create request
     const pts = loadPoints();
     const myName = getDisplayName();
-    const myKey = myName === settings.memberB ? 'B' : 'A';
+    const myKey = getMyKey();
     const otherName = myKey === 'A' ? (settings.memberB || 'B') : (settings.memberA || 'A');
     pts[myKey].total = Math.max(0, pts[myKey].total - 10);
     pts[myKey].history.push({ date: today(), choreName: selected.name, points: 10, type: 'spent', by: myName });
@@ -1517,7 +1536,7 @@ document.addEventListener('click', async (e) => {
       saveWeeklyChores(weekKey, chores);
       // Add points
       const pts = loadPoints();
-      const myKey = getDisplayName() === settings.memberB ? 'B' : 'A';
+      const myKey = getMyKey();
       pts[myKey].total = (pts[myKey].total || 0) + (chore.difficulty || 1);
       pts[myKey].history.push({ date: today(), choreName: chore.name, points: chore.difficulty || 1, type: 'earned', by: getDisplayName() });
       savePoints(pts);
@@ -1548,7 +1567,7 @@ document.addEventListener('click', async (e) => {
       saveWeeklyChores(weekKey, chores);
       if (status === 'done') {
         const pts = loadPoints();
-        const myKey = getDisplayName() === settings.memberB ? 'B' : 'A';
+        const myKey = getMyKey();
         pts[myKey].total = (pts[myKey].total || 0) + (chore.difficulty || 1);
         pts[myKey].history.push({ date: today(), choreName: chore.name, points: chore.difficulty || 1, type: 'earned', by: getDisplayName() });
         savePoints(pts);
@@ -1564,6 +1583,40 @@ document.addEventListener('click', async (e) => {
     case 'close-modal':
       document.getElementById('status-modal').classList.add('hidden');
       break;
+    case 'undo-chore': {
+      const choreId = target.getAttribute('data-chore-id');
+      const weekKey = target.getAttribute('data-week');
+      const chores = loadWeeklyChores(weekKey);
+      if (!chores) break;
+      const chore = chores.find(c => c.id === choreId);
+      if (!chore) break;
+      const wasDone = chore.status === 'done';
+      const wasDoneBy = chore.doneBy;
+      const prevDifficulty = chore.difficulty || 1;
+      if (wasDone) {
+        const pts = loadPoints();
+        for (const k of ['A', 'B']) {
+          const h = pts[k]?.history || [];
+          for (let i = h.length - 1; i >= 0; i--) {
+            if (h[i].type === 'earned' && h[i].choreName === chore.name && h[i].by === wasDoneBy) {
+              pts[k].total = Math.max(0, (pts[k].total || 0) - (h[i].points || prevDifficulty));
+              h.splice(i, 1);
+              break;
+            }
+          }
+        }
+        savePoints(pts);
+        gasPost('updatePoints', { points: pts });
+      }
+      chore.status = null;
+      chore.doneBy = null;
+      chore.doneAt = null;
+      chore.date = null;
+      saveWeeklyChores(weekKey, chores);
+      gasPost('updateChoreStatus', { weekKey, choreId, status: null, doneBy: null });
+      renderToday();
+      break;
+    }
 
     // --- Roulette ---
     case 'open-roulette': openRoulette(); break;

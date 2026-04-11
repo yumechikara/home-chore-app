@@ -382,6 +382,7 @@ main {
 .btn-primary { background: var(--color-primary); color: white; }
 .btn-complete { background: var(--color-success-bg); color: var(--color-success); }
 .btn-skip { background: #F0F0F0; color: var(--color-text-sub); }
+.btn-undo { background: #EEE; color: var(--color-text-sub); border: 1px solid #CCC; }
 .btn-danger { background: var(--color-danger-bg); color: var(--color-danger); }
 .btn-secondary { background: var(--color-primary-light); color: var(--color-primary); }
 .btn-block { width: 100%; padding: 12px; }
