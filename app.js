@@ -3,8 +3,14 @@
 // ============================================================
 
 // --- Constants ---
-const APP_VERSION = '1.4.3';
+const APP_VERSION = '1.5.0';
 const CHANGELOG = [
+  { version: '1.5.0', date: '2026-04-10', changes: [
+    '西宮市公式ゴミカレンダー PDF の自動取得・閲覧機能を追加',
+    'ゴミ暦タブから PDF を直接開けるように',
+    'オフラインでも PDF を閲覧可能（初回取得後）',
+    'GitHub Actions で月1回 PDF を自動更新'
+  ]},
   { version: '1.4.3', date: '2026-04-10', changes: [
     '家事リスト管理の曜日チェックボックスがカードからはみ出す不具合を修正'
   ]},
@@ -782,7 +788,16 @@ function renderCalendar() {
   }
   daysHtml += '</div>';
 
-  el.innerHTML = navHtml + daysHtml;
+  const pdfHtml = `
+    <div class="garbage-pdf-section">
+      <a href="./assets/garbage-calendar.pdf" target="_blank" rel="noopener" class="btn btn-secondary btn-block">
+        📄 市の公式ゴミカレンダー PDF を見る（西宮市 2026年版）
+      </a>
+      <p class="form-hint">年末年始の特例や出し方ルールの詳細はこちら</p>
+    </div>
+  `;
+
+  el.innerHTML = navHtml + daysHtml + pdfHtml;
 }
 
 // ============================================================

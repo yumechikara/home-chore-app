@@ -477,6 +477,17 @@ main {
   text-align: center;
 }
 
+.garbage-pdf-section {
+  margin-top: 16px;
+  background: var(--color-card);
+  border-radius: 12px;
+  padding: 14px;
+}
+.garbage-pdf-section .form-hint {
+  text-align: center;
+  margin-top: 8px;
+}
+
 /* ============================================================
    ポイント（綱引きゲージ）
    ============================================================ */

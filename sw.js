@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ouchi-touban-v8';
+const CACHE_NAME = 'ouchi-touban-v9';
 const ASSETS = [
   './',
   './index.html',
@@ -6,10 +6,19 @@ const ASSETS = [
   './style.css',
   './manifest.json'
 ];
+const OPTIONAL_ASSETS = [
+  './assets/garbage-calendar.pdf'
+];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
+    caches.open(CACHE_NAME).then(async (cache) => {
+      await cache.addAll(ASSETS);
+      // PDF などはまだ存在しない場合があるので失敗を許容
+      await Promise.all(
+        OPTIONAL_ASSETS.map((url) => cache.add(url).catch(() => {}))
+      );
+    })
   );
   self.skipWaiting();
 });
