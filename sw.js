@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ouchi-touban-v14';
+const CACHE_NAME = 'ouchi-touban-v15';
 const ASSETS = [
   './',
   './index.html',

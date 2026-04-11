@@ -3,8 +3,13 @@
 // ============================================================
 
 // --- Constants ---
-const APP_VERSION = '1.7.0';
+const APP_VERSION = '1.7.1';
 const CHANGELOG = [
+  { version: '1.7.1', date: '2026-04-11', changes: [
+    'ゴミ歴タブ: カレンダーと分別画像の間に「区分方法」見出しを追加',
+    'ゴミ歴タブ: 「分別早見表の詳細はこちら」を画像と PDF リンクの間へ移動',
+    'ハンバーガーメニューを画面右上から左上に移動 (タイトルは中央に維持)'
+  ]},
   { version: '1.7.0', date: '2026-04-11', changes: [
     'ルーレット: 家事名/景品名が円盤に表示されるように修正 (SVG ベースで再実装)',
     'ルーレットを回せるポイント差を設定から変更可能に (デフォルト 10pt)',
@@ -855,14 +860,15 @@ function renderCalendar() {
   daysHtml += '</div>';
 
   const pdfHtml = `
+    <h3 class="section-title" style="margin-top:16px;">区分方法</h3>
     <div class="garbage-pdf-section">
       <a href="./assets/garbage-calendar.pdf" target="_blank" rel="noopener" class="garbage-categories-image-link">
         <img src="./assets/garbage-categories.png" alt="令和8年4月からの新分別区分・収集形態" class="garbage-categories-image" loading="lazy">
       </a>
+      <p class="form-hint" style="margin:8px 0;">分別早見表の詳細はこちら</p>
       <a href="./assets/garbage-calendar.pdf" target="_blank" rel="noopener" class="btn btn-secondary btn-block">
         公式ゴミカレンダー PDF を見る（西宮市 2026年版）
       </a>
-      <p class="form-hint">分別早見表の詳細はこちら</p>
     </div>
   `;
 
