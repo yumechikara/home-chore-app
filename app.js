@@ -3,8 +3,12 @@
 // ============================================================
 
 // --- Constants ---
-const APP_VERSION = '1.6.0';
+const APP_VERSION = '1.6.1';
 const CHANGELOG = [
+  { version: '1.6.1', date: '2026-04-11', changes: [
+    '「やった」ボタンが取消後に反応しなくなる問題を修正（ポイント構造の自己修復と click ハンドラの防御強化）',
+    'モーダルを背景タップで閉じた後、残留 state が次の操作に干渉しないよう修正'
+  ]},
   { version: '1.6.0', date: '2026-04-11', changes: [
     '今日の家事で完了した項目を「取消」ボタンで元に戻せるように',
     '取消時は加算したポイントも自動で減算',
@@ -230,9 +234,22 @@ function savePhoto(choreId, weekKey, dataUrl) {
 }
 function saveChores(chores) { localStorage.setItem('ouchi_chores', JSON.stringify(chores)); }
 
+function normalizePoints(p) {
+  const raw = p && typeof p === 'object' ? p : {};
+  return {
+    A: {
+      total: Number(raw.A?.total) || 0,
+      history: Array.isArray(raw.A?.history) ? raw.A.history : []
+    },
+    B: {
+      total: Number(raw.B?.total) || 0,
+      history: Array.isArray(raw.B?.history) ? raw.B.history : []
+    }
+  };
+}
 function loadPoints() {
-  try { return JSON.parse(localStorage.getItem('ouchi_points')) || { A: { total: 0, history: [] }, B: { total: 0, history: [] } }; }
-  catch { return { A: { total: 0, history: [] }, B: { total: 0, history: [] } }; }
+  try { return normalizePoints(JSON.parse(localStorage.getItem('ouchi_points'))); }
+  catch { return normalizePoints(null); }
 }
 function savePoints(pts) { localStorage.setItem('ouchi_points', JSON.stringify(pts)); }
 
@@ -357,7 +374,7 @@ async function syncFromGAS() {
   const result = await gasGet('getAll', { weekKey });
   if (result) {
     if (result.weeklyChores) saveWeeklyChores(weekKey, result.weeklyChores);
-    if (result.points) savePoints(result.points);
+    if (result.points) savePoints(normalizePoints(result.points));
     if (result.requests) saveRequests(result.requests);
     state.lastSync = new Date();
   }
@@ -1445,6 +1462,7 @@ document.addEventListener('click', async (e) => {
   if (!target) return;
   const action = target.getAttribute('data-action');
 
+  try {
   switch (action) {
     // --- Auth ---
     case 'do-login': {
@@ -1537,6 +1555,7 @@ document.addEventListener('click', async (e) => {
       // Add points
       const pts = loadPoints();
       const myKey = getMyKey();
+      if (!pts[myKey]) pts[myKey] = { total: 0, history: [] };
       pts[myKey].total = (pts[myKey].total || 0) + (chore.difficulty || 1);
       pts[myKey].history.push({ date: today(), choreName: chore.name, points: chore.difficulty || 1, type: 'earned', by: getDisplayName() });
       savePoints(pts);
@@ -1568,6 +1587,7 @@ document.addEventListener('click', async (e) => {
       if (status === 'done') {
         const pts = loadPoints();
         const myKey = getMyKey();
+        if (!pts[myKey]) pts[myKey] = { total: 0, history: [] };
         pts[myKey].total = (pts[myKey].total || 0) + (chore.difficulty || 1);
         pts[myKey].history.push({ date: today(), choreName: chore.name, points: chore.difficulty || 1, type: 'earned', by: getDisplayName() });
         savePoints(pts);
@@ -1582,6 +1602,8 @@ document.addEventListener('click', async (e) => {
     }
     case 'close-modal':
       document.getElementById('status-modal').classList.add('hidden');
+      state.selectedChoreId = null;
+      state.selectedWeekKey = null;
       break;
     case 'undo-chore': {
       const choreId = target.getAttribute('data-chore-id');
@@ -1614,6 +1636,8 @@ document.addEventListener('click', async (e) => {
       chore.date = null;
       saveWeeklyChores(weekKey, chores);
       gasPost('updateChoreStatus', { weekKey, choreId, status: null, doneBy: null });
+      state.selectedChoreId = null;
+      state.selectedWeekKey = null;
       renderToday();
       break;
     }
@@ -1831,6 +1855,9 @@ document.addEventListener('click', async (e) => {
       renderToday();
       break;
     }
+  }
+  } catch (err) {
+    console.error('[click handler]', action, err);
   }
 });
 
