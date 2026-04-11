@@ -489,6 +489,135 @@ main {
 }
 
 /* ============================================================
+   ゴミ分別ルール情報カード
+   ============================================================ */
+.garbage-info-section { margin-top: 20px; }
+.garbage-info-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 0 10px;
+  color: var(--color-text);
+}
+.garbage-info-highlights {
+  background: #FFF8E1;
+  border-left: 4px solid #FFB300;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+.garbage-info-highlights-title {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: #6B4F00;
+}
+.garbage-info-highlights ul {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12px;
+  color: #5A4500;
+}
+.garbage-info-highlights li { margin: 2px 0; }
+
+.garbage-info-card {
+  background: var(--color-card);
+  border-radius: 12px;
+  margin-bottom: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  overflow: hidden;
+}
+.garbage-info-header {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 12px 14px;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  text-align: left;
+  color: var(--color-text);
+}
+.garbage-info-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.garbage-info-dot.burn { background: var(--garbage-burn-bg); border: 2px solid #E07B5F; }
+.garbage-info-dot.nonburn { background: var(--garbage-nonburn-bg); border: 2px solid #5B8FBF; }
+.garbage-info-dot.resource { background: var(--garbage-resource-bg); border: 2px solid #7EA84B; }
+.garbage-info-dot.bottle { background: var(--garbage-bottle-bg); border: 2px solid #C77BA2; }
+.garbage-info-dot.plastic { background: var(--garbage-plastic-bg); border: 2px solid #D9A04A; }
+.garbage-info-dot.can { background: var(--garbage-can-bg); border: 2px solid #4CA88A; }
+.garbage-info-dot.bulky { background: #EFE4D7; border: 2px solid #8B6E48; }
+
+.garbage-info-name {
+  flex: 1;
+  font-weight: 600;
+}
+.garbage-info-freq {
+  font-size: 11px;
+  background: #F0F0F0;
+  color: #555;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+.garbage-info-arrow {
+  font-size: 12px;
+  color: #999;
+  transition: transform 0.2s;
+}
+.garbage-info-card.expanded .garbage-info-arrow { transform: rotate(180deg); }
+
+.garbage-info-body {
+  display: none;
+  padding: 0 14px 14px;
+  font-size: 13px;
+  color: var(--color-text);
+}
+.garbage-info-card.expanded .garbage-info-body { display: block; }
+.garbage-info-bag {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: #666;
+}
+.garbage-info-subtitle {
+  margin: 8px 0 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #777;
+}
+.garbage-info-items, .garbage-info-rules {
+  margin: 0;
+  padding-left: 18px;
+}
+.garbage-info-items li, .garbage-info-rules li {
+  margin: 2px 0;
+  line-height: 1.5;
+}
+
+.garbage-info-contact { margin-top: 14px; }
+.garbage-contact-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--color-card);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 6px;
+  text-decoration: none;
+  color: var(--color-text);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+.garbage-contact-icon { font-size: 22px; }
+.garbage-contact-info { display: flex; flex-direction: column; }
+.garbage-contact-name { font-size: 12px; color: #666; }
+.garbage-contact-phone { font-size: 16px; font-weight: 700; color: var(--color-primary); }
+.garbage-contact-hours { font-size: 11px; color: #888; }
+
+/* ============================================================
    ポイント（綱引きゲージ）
    ============================================================ */
 .tow-gauge-wrapper {

@@ -3,8 +3,15 @@
 // ============================================================
 
 // --- Constants ---
-const APP_VERSION = '1.5.0';
+const APP_VERSION = '1.5.1';
 const CHANGELOG = [
+  { version: '1.5.1', date: '2026-04-11', changes: [
+    'ゴミ暦タブに「分別ルール」情報カードを追加（西宮市公式 PDF から抜粋）',
+    '7カテゴリ（もやす/不燃/粗大/缶ペット/びん/紙資源/プラ）の品目例と出し方ルールをアプリ内で確認可能に',
+    '令和8年4月からの新分別区分のポイントを表示',
+    'ゴミ問い合わせ電話番号をタップで発信できるように',
+    'PDF をオフラインキャッシュ対象から除外（容量都合）'
+  ]},
   { version: '1.5.0', date: '2026-04-10', changes: [
     '西宮市公式ゴミカレンダー PDF の自動取得・閲覧機能を追加',
     'ゴミ暦タブから PDF を直接開けるように',
@@ -429,6 +436,17 @@ async function handleRegister(email, displayName, pin) {
 // ============================================================
 // Garbage Schedule
 // ============================================================
+let garbageInfo = null;
+
+async function loadGarbageInfo() {
+  if (garbageInfo) return garbageInfo;
+  try {
+    const res = await fetch('./data/garbage-info.json');
+    if (res.ok) garbageInfo = await res.json();
+  } catch (e) { /* offline & not cached: leave null */ }
+  return garbageInfo;
+}
+
 async function fetchGarbagePage(year, month) {
   const areaId = settings.garbageAreaId || '155';
   const targetUrl = `https://www.nishi.or.jp/homepage/gomicalendar/calendar.html?date=${year}-${month}&id=${areaId}`;
@@ -793,11 +811,90 @@ function renderCalendar() {
       <a href="./assets/garbage-calendar.pdf" target="_blank" rel="noopener" class="btn btn-secondary btn-block">
         📄 市の公式ゴミカレンダー PDF を見る（西宮市 2026年版）
       </a>
-      <p class="form-hint">年末年始の特例や出し方ルールの詳細はこちら</p>
+      <p class="form-hint">分別早見表の詳細はこちら</p>
     </div>
   `;
 
-  el.innerHTML = navHtml + daysHtml + pdfHtml;
+  el.innerHTML = navHtml + daysHtml + pdfHtml + renderGarbageInfoSection();
+
+  // 非同期でデータをロードして再描画
+  if (!garbageInfo) {
+    loadGarbageInfo().then(() => {
+      const cur = document.getElementById('calendar-content');
+      if (cur && garbageInfo) {
+        const slot = cur.querySelector('.garbage-info-section-slot');
+        if (slot) slot.outerHTML = renderGarbageInfoSection();
+      }
+    });
+  }
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, (c) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[c]);
+}
+
+function renderGarbageInfoSection() {
+  if (!garbageInfo) {
+    return '<div class="garbage-info-section-slot"></div>';
+  }
+  const highlightsHtml = `
+    <div class="garbage-info-highlights">
+      <div class="garbage-info-highlights-title">💡 令和8年4月からの新分別区分のポイント</div>
+      <ul>
+        ${garbageInfo.highlights.map(h => `<li>${escapeHtml(h)}</li>`).join('')}
+      </ul>
+    </div>
+  `;
+
+  const cardsHtml = garbageInfo.categories.map(cat => `
+    <div class="garbage-info-card" data-cat-id="${cat.id}">
+      <button type="button" class="garbage-info-header" data-action="toggle-garbage-card">
+        <span class="garbage-info-dot ${cat.color}"></span>
+        <span class="garbage-info-name">${escapeHtml(cat.name)}</span>
+        <span class="garbage-info-freq">${escapeHtml(cat.frequency)}</span>
+        <span class="garbage-info-arrow">▼</span>
+      </button>
+      <div class="garbage-info-body">
+        <p class="garbage-info-bag">袋: ${escapeHtml(cat.bag)}</p>
+        <p class="garbage-info-subtitle">対象品目</p>
+        <ul class="garbage-info-items">
+          ${cat.items.map(i => `<li>${escapeHtml(i)}</li>`).join('')}
+        </ul>
+        <p class="garbage-info-subtitle">出し方</p>
+        <ul class="garbage-info-rules">
+          ${cat.rules.map(r => `<li>${escapeHtml(r)}</li>`).join('')}
+        </ul>
+      </div>
+    </div>
+  `).join('');
+
+  const contactHtml = `
+    <div class="garbage-info-contact">
+      <p class="garbage-info-subtitle">問い合わせ先</p>
+      ${garbageInfo.contact.map(c => `
+        <a class="garbage-contact-card" href="tel:${c.phone.replace(/-/g,'')}">
+          <span class="garbage-contact-icon">📞</span>
+          <span class="garbage-contact-info">
+            <span class="garbage-contact-name">${escapeHtml(c.name)}</span>
+            <span class="garbage-contact-phone">${escapeHtml(c.phone)}</span>
+            <span class="garbage-contact-hours">${escapeHtml(c.hours)}</span>
+          </span>
+        </a>
+      `).join('')}
+    </div>
+  `;
+
+  return `
+    <div class="garbage-info-section garbage-info-section-slot">
+      <h3 class="garbage-info-title">📋 ごみの分別ルール</h3>
+      ${highlightsHtml}
+      ${cardsHtml}
+      ${contactHtml}
+      <p class="form-hint" style="margin-top:8px;">出典: ${escapeHtml(garbageInfo.source)}</p>
+    </div>
+  `;
 }
 
 // ============================================================
@@ -1650,6 +1747,11 @@ document.addEventListener('click', async (e) => {
     case 'this-week': state.currentWeekOffset = 0; renderCalendar(); break;
     case 'prev-month': state.currentWeekOffset -= 4; renderCalendar(); break;
     case 'next-month': state.currentWeekOffset += 4; renderCalendar(); break;
+    case 'toggle-garbage-card': {
+      const card = target.closest('.garbage-info-card');
+      if (card) card.classList.toggle('expanded');
+      break;
+    }
 
     // --- Chat ---
     case 'send-chat': {
