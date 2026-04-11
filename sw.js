@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ouchi-touban-v13';
+const CACHE_NAME = 'ouchi-touban-v14';
 const ASSETS = [
   './',
   './index.html',
@@ -6,7 +6,7 @@ const ASSETS = [
   './style.css',
   './manifest.json',
   './data/garbage-info.json',
-  './assets/garbage-categories.jpg'
+  './assets/garbage-categories.png'
 ];
 
 self.addEventListener('install', (e) => {

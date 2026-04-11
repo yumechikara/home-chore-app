@@ -176,13 +176,94 @@ body {
   height: var(--header-height);
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
+  padding: 0 12px 0 16px;
   border-bottom: 1px solid var(--color-border);
 }
 .app-header h1 {
   font-size: 16px;
   font-weight: 700;
 }
+.hamburger-btn {
+  background: none;
+  border: none;
+  padding: 8px;
+  color: var(--color-text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.hamburger-btn:active { opacity: 0.6; }
+
+/* ============================================================
+   ハンバーガーメニュー
+   ============================================================ */
+.hamburger-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+}
+.hamburger-panel.hidden { display: none; }
+.hamburger-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+}
+.hamburger-menu {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 280px;
+  max-width: 80vw;
+  background: var(--color-card);
+  padding: 20px 12px 20px;
+  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+  animation: slideInRight 0.2s ease-out;
+}
+.hamburger-menu h3 {
+  font-size: 14px;
+  color: var(--color-text-sub);
+  margin: 4px 8px 12px;
+  font-weight: 600;
+}
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+.hamburger-item {
+  text-align: left;
+  padding: 14px 12px;
+  border: none;
+  background: none;
+  font-size: 15px;
+  border-radius: 8px;
+  color: var(--color-text);
+  cursor: pointer;
+}
+.hamburger-item:active { background: var(--color-bg); }
+.hamburger-logout {
+  margin-top: auto;
+  color: #e74c3c;
+}
+.hamburger-version {
+  font-size: 11px;
+  color: var(--color-text-sub);
+  text-align: center;
+  margin-top: 12px;
+}
+.help-content p {
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 0 0 10px;
+  color: var(--color-text);
+}
+.help-content strong { color: var(--color-primary); }
 
 /* ============================================================
    メインコンテンツ

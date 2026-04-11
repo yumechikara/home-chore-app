@@ -38,6 +38,13 @@
 
   <header class="app-header">
     <h1>おうち当番</h1>
+    <button class="hamburger-btn" data-action="toggle-hamburger" aria-label="メニュー">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <line x1="3" y1="6" x2="21" y2="6"/>
+        <line x1="3" y1="12" x2="21" y2="12"/>
+        <line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+    </button>
   </header>
 
   <main id="main">
@@ -128,6 +135,70 @@
       <h3>更新履歴</h3>
       <div id="changelog-content"></div>
       <button class="btn btn-secondary btn-block" data-action="close-changelog" style="margin-top:12px;">閉じる</button>
+    </div>
+  </div>
+
+  <!-- ハンバーガーメニュー -->
+  <div id="hamburger-panel" class="hamburger-panel hidden">
+    <div class="hamburger-backdrop" data-action="close-hamburger"></div>
+    <nav class="hamburger-menu">
+      <h3>メニュー</h3>
+      <button class="hamburger-item" data-action="show-help">❓ ヘルプ</button>
+      <button class="hamburger-item" data-action="show-changelog">📝 更新履歴</button>
+      <button class="hamburger-item" data-action="show-invite-hamburger">🔗 招待コード</button>
+      <button class="hamburger-item" data-action="show-login-history-hamburger">👤 ログイン履歴</button>
+      <button class="hamburger-item" data-action="export-data">📤 データをエクスポート</button>
+      <button class="hamburger-item" data-action="import-data">📥 データをインポート</button>
+      <button class="hamburger-item hamburger-logout" data-action="logout">🚪 ログアウト</button>
+      <p class="hamburger-version" id="hamburger-version"></p>
+    </nav>
+  </div>
+
+  <!-- ハンバーガー内モーダル: 招待コード -->
+  <div id="invite-modal" class="modal hidden">
+    <div class="modal-backdrop" data-action="close-invite-modal"></div>
+    <div class="modal-sheet">
+      <h3>招待コード</h3>
+      <div class="form-group">
+        <button class="btn btn-secondary btn-block" data-action="generate-invite">招待コードを発行</button>
+        <div id="invite-code-output" class="invite-code-output" style="display:none;"></div>
+      </div>
+      <div class="form-group">
+        <label>招待コードを入力</label>
+        <textarea id="invite-code-input" rows="2" placeholder="招待コードを貼り付け"></textarea>
+        <button class="btn btn-primary btn-block" data-action="apply-invite" style="margin-top:6px;">コードを適用</button>
+        <div id="invite-apply-result"></div>
+      </div>
+      <button class="btn btn-secondary btn-block" data-action="close-invite-modal" style="margin-top:12px;">閉じる</button>
+    </div>
+  </div>
+
+  <!-- ハンバーガー内モーダル: ログイン履歴 -->
+  <div id="login-history-modal" class="modal hidden">
+    <div class="modal-backdrop" data-action="close-login-history-modal"></div>
+    <div class="modal-sheet">
+      <h3>ログイン履歴</h3>
+      <div id="login-history-modal-list" class="login-history-list">
+        <p class="empty-state">読み込み中...</p>
+      </div>
+      <button class="btn btn-secondary btn-block" data-action="close-login-history-modal" style="margin-top:12px;">閉じる</button>
+    </div>
+  </div>
+
+  <!-- ハンバーガー内モーダル: ヘルプ -->
+  <div id="help-modal" class="modal hidden">
+    <div class="modal-backdrop" data-action="close-help-modal"></div>
+    <div class="modal-sheet">
+      <h3>ヘルプ</h3>
+      <div class="help-content">
+        <p><strong>今日タブ</strong>: その日の家事にチェックを入れて「やった」をタップするとポイントが貯まります。「取消」で取り消せます。</p>
+        <p><strong>ゴミ暦タブ</strong>: 次のゴミ収集日と分別区分を確認できます。</p>
+        <p><strong>ポイントタブ</strong>: メンバー間のポイント差が設定値以上になると、上位者がルーレットを回して相手に家事をおねがいできます。閾値は設定タブから変更可能です。</p>
+        <p><strong>設定タブ</strong>: メンバー名、ゴミ地区、天気、ルーレット閾値、家事リスト、景品の管理ができます。</p>
+        <p><strong>AI相談タブ</strong>: 家事のコツや段取りを AI に質問できます (Claude API 要設定)。</p>
+        <p><strong>メニュー (≡)</strong>: 招待コード、ログイン履歴、データのエクスポート/インポート、ログアウトはここからアクセスします。</p>
+      </div>
+      <button class="btn btn-secondary btn-block" data-action="close-help-modal" style="margin-top:12px;">閉じる</button>
     </div>
   </div>
 

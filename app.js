@@ -3,8 +3,15 @@
 // ============================================================
 
 // --- Constants ---
-const APP_VERSION = '1.6.1';
+const APP_VERSION = '1.7.0';
 const CHANGELOG = [
+  { version: '1.7.0', date: '2026-04-11', changes: [
+    'ルーレット: 家事名/景品名が円盤に表示されるように修正 (SVG ベースで再実装)',
+    'ルーレットを回せるポイント差を設定から変更可能に (デフォルト 10pt)',
+    'ハンバーガーメニュー (≡) を追加 — ヘルプ/更新履歴/招待コード/ログイン履歴/データのエクスポート・インポート/ログアウト',
+    'ゴミ分別区分画像を最新のスクリーンショットに差し替え',
+    '設定タブから招待コード・ログイン履歴・ログアウトを整理 (ハンバーガー側に移動)'
+  ]},
   { version: '1.6.1', date: '2026-04-11', changes: [
     '「やった」ボタンが取消後に反応しなくなる問題を修正（ポイント構造の自己修復と click ハンドラの防御強化）',
     'モーダルを背景タップで閉じた後、残留 state が次の操作に干渉しないよう修正'
@@ -197,7 +204,8 @@ function defaultSettings() {
     spreadsheetId: '', sheetsApiKey: '',
     claudeApiKey: '', gasWebAppUrl: '',
     garbageAreaId: '155',
-    weatherLat: '34.7333', weatherLon: '135.3417'
+    weatherLat: '34.7333', weatherLon: '135.3417',
+    rouletteThreshold: 10
   };
 }
 function loadSettings() {
@@ -849,7 +857,7 @@ function renderCalendar() {
   const pdfHtml = `
     <div class="garbage-pdf-section">
       <a href="./assets/garbage-calendar.pdf" target="_blank" rel="noopener" class="garbage-categories-image-link">
-        <img src="./assets/garbage-categories.jpg" alt="令和8年4月からの新分別区分・収集形態" class="garbage-categories-image" loading="lazy">
+        <img src="./assets/garbage-categories.png" alt="令和8年4月からの新分別区分・収集形態" class="garbage-categories-image" loading="lazy">
       </a>
       <a href="./assets/garbage-calendar.pdf" target="_blank" rel="noopener" class="btn btn-secondary btn-block">
         公式ゴミカレンダー PDF を見る（西宮市 2026年版）
@@ -956,7 +964,8 @@ function renderPoints() {
   const diff = ptsA - ptsB;
   const absDiff = Math.abs(diff);
   const leader = diff > 0 ? 'A' : diff < 0 ? 'B' : null;
-  const canSpin = absDiff >= 10 && leader === myKey;
+  const rouletteThreshold = Number(settings.rouletteThreshold) || 10;
+  const canSpin = absDiff >= rouletteThreshold && leader === myKey;
 
   const MAX_VISUAL_DIFF = 30;
   const fillPercent = Math.min(50, (absDiff / MAX_VISUAL_DIFF) * 50);
@@ -993,7 +1002,7 @@ function renderPoints() {
     </div>
     ${canSpin ? `<div class="roulette-trigger">
       <button class="btn" data-action="open-roulette">🎰 ルーレットを回す！</button>
-      <p style="font-size:12px;color:var(--color-text-sub);margin-top:4px;">10ポイント差を消費して相手に家事をおねがいできます</p>
+      <p style="font-size:12px;color:var(--color-text-sub);margin-top:4px;">${rouletteThreshold}ポイント差を消費して相手に家事をおねがいできます</p>
     </div>` : ''}
     ${requestHtml}
     <p class="section-title">月間レポート</p>
@@ -1118,16 +1127,11 @@ function renderSettings() {
         <p class="form-hint">西宮市 = 34.7333, 135.3417（APIキー不要）</p>
       </div>
 
-      <div class="form-section-title">招待コード</div>
+      <div class="form-section-title">ルーレット設定</div>
       <div class="form-group">
-        <button class="btn btn-secondary btn-block" data-action="generate-invite">招待コードを発行</button>
-        <div id="invite-code-output" class="invite-code-output" style="display:none;"></div>
-      </div>
-      <div class="form-group">
-        <label>招待コードを入力（相手から受け取ったコード）</label>
-        <textarea id="invite-code-input" rows="2" placeholder="招待コードを貼り付け"></textarea>
-        <button class="btn btn-primary btn-block" data-action="apply-invite" style="margin-top:6px;">コードを適用</button>
-        <div id="invite-apply-result"></div>
+        <label>ルーレットを回せるポイント差</label>
+        <input type="number" id="set-rouletteThreshold" value="${settings.rouletteThreshold || 10}" min="1" max="100">
+        <p class="form-hint">この差以上ついたら上位者がルーレットを回せます</p>
       </div>
 
       <button class="btn btn-primary btn-block" data-action="save-settings" style="margin-top:16px;">設定を保存</button>
@@ -1159,13 +1163,6 @@ function renderSettings() {
     </div>
 
     <details class="login-history-section">
-      <summary>ログイン履歴</summary>
-      <div id="login-history-list" class="login-history-list">
-        <p class="empty-state">読み込み中...</p>
-      </div>
-    </details>
-
-    <details class="login-history-section">
       <summary>外部サービス連携</summary>
       <div class="external-services-inner">
         <div class="form-group">
@@ -1187,32 +1184,7 @@ function renderSettings() {
         <button class="btn btn-primary btn-block" data-action="save-settings" style="margin-top:8px;">保存</button>
       </div>
     </details>
-
-    <div style="margin-top:24px;">
-      <button class="btn btn-danger btn-block" data-action="logout">ログアウト</button>
-    </div>
-    <p class="login-version" style="margin-top:12px;">v${APP_VERSION} <a href="#" data-action="show-changelog" style="color:var(--color-primary);">更新履歴</a></p>
   `;
-
-  // Lazy-load login history on toggle
-  const details = el.querySelector('.login-history-section');
-  if (details) {
-    details.addEventListener('toggle', async () => {
-      if (!details.open) return;
-      const listEl = document.getElementById('login-history-list');
-      const result = await gasGet('getLoginHistory', { email: auth?.email });
-      if (result && result.history) {
-        listEl.innerHTML = result.history.map(h => `
-          <div class="login-history-item">
-            <span>${new Date(h.timestamp).toLocaleString('ja-JP')}</span>
-            <span class="login-history-device">${parseUserAgent(h.userAgent)}</span>
-          </div>
-        `).join('') || '<p class="empty-state">履歴はありません</p>';
-      } else {
-        listEl.innerHTML = '<p class="empty-state">GAS未設定、またはデータなし</p>';
-      }
-    });
-  }
 }
 
 
@@ -1362,20 +1334,42 @@ function openRoulette() {
 
   const sliceAngle = 360 / items.length;
   const colors = ['#FFB5C5', '#FFDAB9', '#E6F1FB', '#EAF3DE', '#FBEAF0', '#E1F5EE', '#EEEDFE', '#FAEEDA'];
-  const clipPath = makeWedgeClipPath(sliceAngle);
 
-  let wheelHtml = '<div class="roulette-wheel" id="roulette-wheel">';
+  // SVG-based wheel for reliable text rendering
+  const size = 260;
+  const cx = size / 2, cy = size / 2;
+  const r = cx - 2;
+  const labelR = r * 0.66;
+  const polar = (deg, dist) => {
+    const a = (deg - 90) * Math.PI / 180;
+    return { x: cx + dist * Math.cos(a), y: cy + dist * Math.sin(a) };
+  };
+  const escXml = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  let svg = `<svg class="roulette-wheel" id="roulette-wheel" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg" style="transform-origin:50% 50%;">`;
+  // Draw wedges first
   items.forEach((item, i) => {
-    const angle = sliceAngle * i;
-    const halfAngle = sliceAngle / 2;
+    const start = sliceAngle * i;
+    const end = start + sliceAngle;
+    const p1 = polar(start, r);
+    const p2 = polar(end, r);
+    const large = sliceAngle > 180 ? 1 : 0;
     const bg = colors[i % colors.length];
-    wheelHtml += `<div class="roulette-slice" style="transform:rotate(${angle}deg);background:${bg};clip-path:${clipPath};"><span class="roulette-label" style="transform:rotate(${halfAngle}deg)">${item.name}</span></div>`;
+    svg += `<path d="M ${cx} ${cy} L ${p1.x.toFixed(2)} ${p1.y.toFixed(2)} A ${r} ${r} 0 ${large} 1 ${p2.x.toFixed(2)} ${p2.y.toFixed(2)} Z" fill="${bg}" stroke="#fff" stroke-width="1"/>`;
   });
-  wheelHtml += '</div>';
+  // Then draw labels on top
+  items.forEach((item, i) => {
+    const mid = sliceAngle * i + sliceAngle / 2;
+    const lp = polar(mid, labelR);
+    const rotate = mid > 90 && mid < 270 ? mid + 180 : mid;
+    const name = item.name.length > 7 ? item.name.slice(0, 6) + '…' : item.name;
+    svg += `<text x="${lp.x.toFixed(2)}" y="${lp.y.toFixed(2)}" text-anchor="middle" dominant-baseline="middle" font-size="11" font-weight="700" fill="#333" transform="rotate(${rotate.toFixed(1)} ${lp.x.toFixed(2)} ${lp.y.toFixed(2)})">${escXml(name)}</text>`;
+  });
+  svg += '</svg>';
 
   container.innerHTML = `
     <div class="roulette-pointer"></div>
-    ${wheelHtml}
+    ${svg}
     <div class="roulette-result" id="roulette-result"></div>
     <div class="roulette-actions">
       <button class="btn btn-primary" data-action="spin-roulette" id="spin-btn">回す！</button>
@@ -1404,8 +1398,9 @@ function spinRoulette() {
     const myName = getDisplayName();
     const myKey = getMyKey();
     const otherName = myKey === 'A' ? (settings.memberB || 'B') : (settings.memberA || 'A');
-    pts[myKey].total = Math.max(0, pts[myKey].total - 10);
-    pts[myKey].history.push({ date: today(), choreName: selected.name, points: 10, type: 'spent', by: myName });
+    const threshold = Number(settings.rouletteThreshold) || 10;
+    pts[myKey].total = Math.max(0, pts[myKey].total - threshold);
+    pts[myKey].history.push({ date: today(), choreName: selected.name, points: threshold, type: 'spent', by: myName });
     savePoints(pts);
 
     const reqs = loadRequests();
@@ -1500,7 +1495,11 @@ document.addEventListener('click', async (e) => {
     }
     case 'show-login': renderLoginScreen('login'); break;
     case 'show-register': renderLoginScreen('register'); break;
-    case 'logout': clearAuth(); showLoginScreen(); break;
+    case 'logout':
+      document.getElementById('hamburger-panel')?.classList.add('hidden');
+      clearAuth();
+      showLoginScreen();
+      break;
 
     // --- Invite Code ---
     case 'generate-invite': {
@@ -1650,6 +1649,7 @@ document.addEventListener('click', async (e) => {
       renderPoints();
       break;
     case 'show-changelog': {
+      document.getElementById('hamburger-panel')?.classList.add('hidden');
       const modal = document.getElementById('changelog-modal');
       modal.classList.remove('hidden');
       document.getElementById('changelog-content').innerHTML = CHANGELOG.map(v =>
@@ -1663,6 +1663,106 @@ document.addEventListener('click', async (e) => {
     case 'close-changelog':
       document.getElementById('changelog-modal').classList.add('hidden');
       break;
+
+    // --- Hamburger menu ---
+    case 'toggle-hamburger': {
+      const panel = document.getElementById('hamburger-panel');
+      panel.classList.toggle('hidden');
+      const ver = document.getElementById('hamburger-version');
+      if (ver) ver.textContent = `v${APP_VERSION}`;
+      break;
+    }
+    case 'close-hamburger':
+      document.getElementById('hamburger-panel').classList.add('hidden');
+      break;
+    case 'show-help': {
+      document.getElementById('hamburger-panel').classList.add('hidden');
+      document.getElementById('help-modal').classList.remove('hidden');
+      break;
+    }
+    case 'close-help-modal':
+      document.getElementById('help-modal').classList.add('hidden');
+      break;
+    case 'show-invite-hamburger': {
+      document.getElementById('hamburger-panel').classList.add('hidden');
+      document.getElementById('invite-modal').classList.remove('hidden');
+      // Reset state
+      const out = document.getElementById('invite-code-output');
+      if (out) { out.style.display = 'none'; out.innerHTML = ''; }
+      const res = document.getElementById('invite-apply-result');
+      if (res) res.innerHTML = '';
+      break;
+    }
+    case 'close-invite-modal':
+      document.getElementById('invite-modal').classList.add('hidden');
+      break;
+    case 'show-login-history-hamburger': {
+      document.getElementById('hamburger-panel').classList.add('hidden');
+      const modal = document.getElementById('login-history-modal');
+      modal.classList.remove('hidden');
+      const listEl = document.getElementById('login-history-modal-list');
+      listEl.innerHTML = '<p class="empty-state">読み込み中...</p>';
+      const auth = loadAuth();
+      const result = await gasGet('getLoginHistory', { email: auth?.email });
+      if (result && result.history && result.history.length) {
+        listEl.innerHTML = result.history.map(h => `
+          <div class="login-history-item">
+            <span>${new Date(h.timestamp).toLocaleString('ja-JP')}</span>
+            <span class="login-history-device">${parseUserAgent(h.userAgent)}</span>
+          </div>
+        `).join('');
+      } else {
+        listEl.innerHTML = '<p class="empty-state">GAS未設定、またはデータなし</p>';
+      }
+      break;
+    }
+    case 'close-login-history-modal':
+      document.getElementById('login-history-modal').classList.add('hidden');
+      break;
+    case 'export-data': {
+      document.getElementById('hamburger-panel').classList.add('hidden');
+      const data = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('ouchi_')) data[k] = localStorage.getItem(k);
+      }
+      const blob = new Blob([JSON.stringify({ version: APP_VERSION, exportedAt: new Date().toISOString(), data }, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ouchi-touban-backup-${today()}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      break;
+    }
+    case 'import-data': {
+      document.getElementById('hamburger-panel').classList.add('hidden');
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'application/json';
+      input.onchange = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        try {
+          const text = await file.text();
+          const parsed = JSON.parse(text);
+          const data = parsed?.data || parsed;
+          if (!data || typeof data !== 'object') throw new Error('形式が不正です');
+          if (!confirm('現在のデータを上書きしてインポートします。よろしいですか？')) return;
+          Object.entries(data).forEach(([k, v]) => {
+            if (k && k.startsWith('ouchi_')) localStorage.setItem(k, v);
+          });
+          alert('インポートが完了しました。再読み込みします。');
+          location.reload();
+        } catch (err) {
+          alert('インポートに失敗しました: ' + err.message);
+        }
+      };
+      input.click();
+      break;
+    }
 
     // --- Request ---
     case 'complete-request': {
@@ -1687,6 +1787,11 @@ document.addEventListener('click', async (e) => {
       settings.spreadsheetId = document.getElementById('set-spreadsheetId')?.value?.trim() || '';
       settings.sheetsApiKey = document.getElementById('set-sheetsApiKey')?.value?.trim() || '';
       settings.claudeApiKey = document.getElementById('set-claudeApiKey')?.value?.trim() || '';
+      const thrEl = document.getElementById('set-rouletteThreshold');
+      if (thrEl) {
+        const v = parseInt(thrEl.value, 10);
+        settings.rouletteThreshold = (Number.isFinite(v) && v >= 1) ? v : 10;
+      }
       saveSettingsToLocal();
       gasPost('saveSettings', { settings });
       // Clear caches when settings change
