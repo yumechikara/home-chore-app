@@ -487,6 +487,18 @@ main {
   text-align: center;
   margin-top: 8px;
 }
+.garbage-categories-image-link {
+  display: block;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.garbage-categories-image {
+  display: block;
+  width: 100%;
+  height: auto;
+}
 
 /* ============================================================
    ゴミ分別ルール情報カード

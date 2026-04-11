@@ -3,8 +3,12 @@
 // ============================================================
 
 // --- Constants ---
-const APP_VERSION = '1.5.1';
+const APP_VERSION = '1.5.2';
 const CHANGELOG = [
+  { version: '1.5.2', date: '2026-04-11', changes: [
+    'ゴミ暦タブに新分別区分の概要画像を追加（西宮市公式 PDF p.4 から抜粋）',
+    'PDF を見るボタンの表示文言を整理'
+  ]},
   { version: '1.5.1', date: '2026-04-11', changes: [
     'ゴミ暦タブに「分別ルール」情報カードを追加（西宮市公式 PDF から抜粋）',
     '7カテゴリ（もやす/不燃/粗大/缶ペット/びん/紙資源/プラ）の品目例と出し方ルールをアプリ内で確認可能に',
@@ -808,8 +812,11 @@ function renderCalendar() {
 
   const pdfHtml = `
     <div class="garbage-pdf-section">
+      <a href="./assets/garbage-calendar.pdf" target="_blank" rel="noopener" class="garbage-categories-image-link">
+        <img src="./assets/garbage-categories.jpg" alt="令和8年4月からの新分別区分・収集形態" class="garbage-categories-image" loading="lazy">
+      </a>
       <a href="./assets/garbage-calendar.pdf" target="_blank" rel="noopener" class="btn btn-secondary btn-block">
-        📄 市の公式ゴミカレンダー PDF を見る（西宮市 2026年版）
+        公式ゴミカレンダー PDF を見る（西宮市 2026年版）
       </a>
       <p class="form-hint">分別早見表の詳細はこちら</p>
     </div>
